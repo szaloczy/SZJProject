@@ -33,13 +33,4 @@ public class UserController {
         response.setStatus(true);
         return response;
     }
-
-    @PutMapping("/{id}")
-    public void updateUser(@RequestBody User user, @PathVariable Long id){
-        try {
-            userService.updateUser(user,id);
-        } catch (UserNotFoundException e) {
-            throw new RuntimeException("User not found");
-        }
-    }
 }
