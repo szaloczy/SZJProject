@@ -2,6 +2,7 @@ package com.szj.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.szj.demo.enums.ProductCondition;
+import com.szj.demo.enums.ProductState;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Id;
 import lombok.Data;
@@ -26,7 +27,6 @@ public class Product {
     private String seller;
 
     @JsonProperty
-    @NotNull
     @Basic(optional = false)
     private String productName;
 
@@ -34,11 +34,28 @@ public class Product {
     private LocalDateTime creationDate;
 
     @JsonProperty
-    Category category;
+    private String description;
 
     @JsonProperty
     private ProductCondition productCondition;
 
     @JsonProperty
     private Double price;
+
+    @JsonProperty
+    private ProductState productState;
+
+    @JsonProperty
+    private boolean available;
+
+    public Product(String seller, String description, String productName, LocalDateTime creationDate, Double price){
+        productId = UUID.randomUUID();
+        this.seller = seller;
+        this.description = description;
+        this.productName = productName;
+        this.creationDate = creationDate;
+        this.price = price;
+        this.available = true;
+        this.productState = ProductState.OPEN;
+    }
 }
