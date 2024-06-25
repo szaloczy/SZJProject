@@ -1,9 +1,11 @@
 package com.szj.demo.service;
 
 import com.szj.demo.exception.UserNotFoundException;
+import com.szj.demo.model.AuthenticationResponse;
 import com.szj.demo.model.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserService {
 
@@ -13,5 +15,5 @@ public interface UserService {
 
     void deleteUser(Long id) throws Exception;
 
-    void updateUser(User user, Long id) throws UserNotFoundException;
+    AuthenticationResponse login(User user);
 }

@@ -1,22 +1,28 @@
 package com.szj.demo.service;
 
-import com.szj.demo.exception.UserNotFoundException;
+import com.szj.demo.model.AuthenticationResponse;
+import com.szj.demo.model.Token;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
-public class UserServiceImpl implements UserService{
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
-
-    public UserServiceImpl(UserRepository userRepository){
-        this.userRepository = userRepository;
-    }
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<User> findAllUser() {
@@ -25,7 +31,23 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public User createUser(User user) {
-        return userRepository.save(user);
+        if (user.getUsername().length() < 3
+                || user.getPassword().length() < 3) {
+            throw new IllegalStateException("Must be at least 3 character");
+        }
+        if (!Pattern.matches("^[a-zA-Z0-9]+$", user.getUsername())) {
+            throw new IllegalStateException("Data holds illegal character");
+        }
+
+        userRepository.findUserByUsername(user.getUsername())
+                .ifPresentOrElse(u -> {
+                            throw new IllegalStateException(u.getUsername() + " already exists");
+                        }, () -> {
+                            user.setPassword(passwordEncoder.encode(user.getPassword()));
+                            userRepository.save(user);
+                        }
+                );
+        return user;
     }
 
     @Override
@@ -36,22 +58,19 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void updateUser(User user, Long id) throws UserNotFoundException {
-        Optional<User> optionalUser = userRepository.findById(id);
+    public AuthenticationResponse login(User user) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                user.getPassword()
+        ));
 
-        if(optionalUser.isPresent()){
-            User updatedUser = optionalUser.get();
-
-            updatedUser.setId(user.getId());
-            updatedUser.setName(user.getName());
-            updatedUser.setPassword(user.getPassword());
-
-            userRepository.save(updatedUser);
-        } else {
-            throw new UserNotFoundException("User with " + id + "not found");
+        Optional<User> searchUser = Optional.ofNullable(userRepository.findUserByUsername(user.getUsername())
+                .orElseThrow(IllegalStateException::new));
+        String jwtToken = jwtService.generateToken(user);
+        if (searchUser.isPresent()) {
+            tokenService.revokeUserTokens(searchUser.get().getUsername());
+            tokenService.storeToken(new Token(searchUser.get().getUsername(), jwtToken, false));
         }
-
+        return new AuthenticationResponse(jwtToken);
     }
-
-
 }
