@@ -2,60 +2,62 @@ package com.szj.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.szj.demo.enums.ProductCondition;
-import com.szj.demo.enums.ProductState;
-import jakarta.persistence.Basic;
-import jakarta.persistence.Id;
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Document
-@Data
+@Entity
 @Getter
 @Setter
 public class Product {
+
     @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "product_id", updatable = false, nullable = false, length = 36)
     @JsonProperty
     private UUID productId;
+
+    @JsonProperty
+    @Column(nullable = false)
+    private String productName;
 
     @JsonProperty
     private String seller;
 
     @JsonProperty
-    @Basic(optional = false)
-    private String productName;
+    private String description;
+
+    @JsonProperty
+    @Column(nullable = false)
+    private Double price;
+
+    @JsonProperty
+    private Integer stock;
 
     @JsonProperty
     private LocalDateTime creationDate;
 
     @JsonProperty
-    private String description;
+    @Enumerated(EnumType.STRING)
+    private ProductCondition condition;
 
     @JsonProperty
-    private ProductCondition productCondition;
+    private Boolean available;
 
-    @JsonProperty
-    private Double price;
+    public Product() {}
 
-    @JsonProperty
-    private ProductState productState;
-
-    @JsonProperty
-    private boolean available;
-
-    public Product(String seller, String description, String productName, LocalDateTime creationDate, Double price){
-        productId = UUID.randomUUID();
-        this.seller = seller;
+    public Product(String name, String description, Double price, String brand, String category, Integer stock, String imageUrl, ProductCondition condition) {
+        this.productId = UUID.randomUUID();
+        this.productName = name;
         this.description = description;
-        this.productName = productName;
-        this.creationDate = creationDate;
         this.price = price;
-        this.available = true;
-        this.productState = ProductState.OPEN;
+        this.creationDate = LocalDateTime.now();
+        this.condition = condition;
+        this.available = stock > 0;
     }
 }
