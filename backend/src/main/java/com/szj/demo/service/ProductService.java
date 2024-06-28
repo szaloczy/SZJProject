@@ -14,7 +14,6 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final JwtService jwtService;
 
     public List<Product> getAll() {
         return productRepository.findAll();

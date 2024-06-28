@@ -3,6 +3,7 @@ package com.szj.demo.annotations;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InsufficientPrivilageException;
 import com.szj.demo.exception.InvalidTokenException;
+import com.szj.demo.service.UserService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -27,7 +28,6 @@ public class RequiredAuthenticationLevelAspect {
     @Pointcut("@annotation(com.evoBid.evoBid.annotations.RequiredAuthenticationLevel)")
     public void requiredAuthenticationLevelPointcut(){}
 
-
     /**
      * This method is an aspect that is executed before methods annotated with @RequiredAuthenticationLevel.
      * It checks if the current user has the required authentication level to access the method.
@@ -49,7 +49,7 @@ public class RequiredAuthenticationLevelAspect {
         if(annotation != null){
             AuthenticationLevel level = annotation.level();
             try {
-                if(!userService.canAcces(level)){
+                if(!userService.canAccess(level)){
                     throw new InsufficientPrivilageException();
                 }
             } catch (InvalidTokenException e){

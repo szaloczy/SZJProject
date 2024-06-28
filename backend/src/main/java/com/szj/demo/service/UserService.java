@@ -1,7 +1,7 @@
 package com.szj.demo.service;
 
-import com.szj.demo.model.AuthenticationResponse;
-import com.szj.demo.model.Token;
+import com.szj.demo.enums.AuthenticationLevel;
+import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,13 +29,10 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class UserService {
     @Value("${SECRET_KEY}")
-    private String  SECRET_KEY;
+    private String SECRET_KEY;
     private final UserRepository userRepository;
     private final HttpServletRequest request;
     private final Map<User, String> activeTokens = new HashMap<>();
-
-    private final AuthenticationManager authenticationManager;
-    private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -55,8 +51,8 @@ public class UserService {
         }
 
         /*Encode password...*/
-
-        User user = new User(username, password);
+        String encodedPassword = passwordEncoder.encode(password);
+        User user = new User(username, encodedPassword);
         userRepository.save(user);
 
         if(userRepository.findUserByUsername(username).isEmpty()){
@@ -92,38 +88,51 @@ public class UserService {
        return token;
    }
 
-    public List<User> findAllUser() {
-        return userRepository.findAll();
-    }
+   public void logout() throws InvalidTokenException {
+       User user = currentUser();
+       activeTokens.remove(user);
+   }
 
-    public User createUser(User user) {
-        if (user.getUsername().length() < 3
-                || user.getPassword().length() < 3) {
-            throw new IllegalStateException("Must be at least 3 character");
+    /**
+     * Retrieves the currently logged-in user based on the token provided in the Authorization header of the request.
+     *
+     * @return The User object representing the currently logged-in user.
+     * @throws InvalidTokenException If there is a problem with the token, such as it being invalid, expired, or associated with a user that does not exist or has no active token.
+     */
+    public User currentUser() throws InvalidTokenException {
+        String token;
+        if(request.getHeader("Authorization").startsWith("Bearer ")){
+            token = request.getHeader("Authorization").substring("Bearer ".length());
+        } else {
+            throw new InvalidTokenException("Problem with token!");
         }
-        if (!Pattern.matches("^[a-zA-Z0-9]+$", user.getUsername())) {
-            throw new IllegalStateException("Data holds illegal character");
-        }
 
-        userRepository.findUserByUsername(user.getUsername())
-                .ifPresentOrElse(u -> {
-                            throw new IllegalStateException(u.getUsername() + " already exists");
-                        }, () -> {
-                            user.setPassword(passwordEncoder.encode(user.getPassword()));
-                            userRepository.save(user);
-                        }
-                );
-        return user;
+        String potentialUser = extractClaim(token, Claims::getSubject);
+        Optional<User> user = userRepository.findUserByUsername(potentialUser);
+        if(user.isEmpty()) throw new InvalidTokenException("Username does not exits!");
+        if(!activeTokens.containsValue(user.get())) throw new InvalidTokenException("User has no token associated with it!");
+        if(isTokenExpired(activeTokens.get(user.get()))) throw new InvalidTokenException("Token expired!");
+
+        return user.get();
     }
 
-    public void deleteUser(Long id) throws Exception {
-        User user = userRepository.findById(id).orElseThrow(() -> new Exception("User not exists"));
+    /**
+     * Checks if the user with the current access level can access a certain level.
+     *
+     * @param level The level to check. Possible values are "PUBLIC", "PRIVATE", or "SUPER".
+     * @return True if the user has access to the given level, false otherwise.
+     * @throws InvalidTokenException If there is a problem with the token, such as it being invalid, expired, or associated with a user that does not exist or has no active token.
+     */
 
-        userRepository.delete(user);
-    }
+    public boolean canAccess(AuthenticationLevel level) throws InvalidTokenException {
+        if(level == AuthenticationLevel.PUBLIC) return true;
+        User currentUser = currentUser();
 
-    public org.springframework.security.core.userdetails.User currentUser() {
-        return null;
+        return switch (level) {
+            case PRIVATE -> currentUser.getAccessLevel() == AuthenticationLevel.PRIVATE || currentUser.getAccessLevel() == AuthenticationLevel.SUPER;
+            case SUPER -> currentUser.getAccessLevel() == AuthenticationLevel.SUPER;
+            default -> false;
+        };
     }
 
     private String generateToken(User user) {

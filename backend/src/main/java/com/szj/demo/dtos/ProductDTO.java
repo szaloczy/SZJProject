@@ -54,6 +54,6 @@ public class ProductDTO {
         this.price = product.getPrice();
         this.stock = product.getStock();
         this.creationDate = product.getCreationDate();
-        this.condition = product.getCondition();
+        this.condition = product.getProductCondition();
     }
 }

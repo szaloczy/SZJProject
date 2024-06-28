@@ -1,17 +1,14 @@
 package com.szj.demo.controller;
 
-import com.szj.demo.model.AuthenticationResponse;
+import com.szj.demo.annotations.RequiredAuthenticationLevel;
+import com.szj.demo.enums.AuthenticationLevel;
+import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.User;
-import com.szj.demo.model.UserResponse;
+import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
-
-import static org.springframework.web.util.UriComponentsBuilder.fromPath;
 
 @RestController
 @RequestMapping("api/user")
@@ -19,38 +16,38 @@ import static org.springframework.web.util.UriComponentsBuilder.fromPath;
 @RequiredArgsConstructor
 public class UserController {
 
-    public static final String USER_API_PATH = "api/user";
     private final UserService userService;
-    private final JwtService jwtService;
 
-    @GetMapping()
-    public List<User> findAllUser(){
-       return  userService.findAllUser();
-    }
-
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PUBLIC)
     @PostMapping(value = "auth/register")
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<User>> register(@RequestBody User user) {
         try {
-            User savedUser = userService.createUser(user);
-            URI location = fromPath(USER_API_PATH)
-                    .path("/{username}")
-                    .buildAndExpand(user.getUsername())
-                    .toUri();
-            return ResponseEntity.created(location).body(savedUser);
-        } catch (IllegalStateException illegalStateException) {
-            return ResponseEntity.badRequest().body(user);
+            User savedUser = userService.register(user.getUsername(), user.getPassword());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, savedUser, ""));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 
-    @PostMapping(value = "auth/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody User user){
-        return ResponseEntity.ok(userService.login(user));
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PUBLIC)
+    @PostMapping( value = "auth/login")
+    public ResponseEntity<ApiResponse<String>> login(@RequestBody User user) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, userService.login(user), ""));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(null);
+        }
     }
 
-    @GetMapping(value = "user/detail")
-    public ResponseEntity<UserResponse> getDetail(@RequestHeader(HttpHeaders.AUTHORIZATION) String jwtToken){
-        User user = jwtService.extractUser(jwtToken);
-        return  ResponseEntity.ok(new UserResponse(user));
-
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PostMapping(value = "auth/logout")
+    public ResponseEntity<HttpStatus> logout() {
+        try {
+            userService.logout();
+            return ResponseEntity.ok(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 }

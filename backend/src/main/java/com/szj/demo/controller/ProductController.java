@@ -5,6 +5,7 @@ import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.Product;
 import com.szj.demo.model.ProductRequest;
 import com.szj.demo.service.ProductService;
+import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -39,22 +40,6 @@ public class ProductController {
         } catch (HttpServerErrorException.InternalServerError e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("Endpoint not found"));
         }
-    }
-
-    @PutMapping()
-    public ResponseEntity<ApiResponse<ProductDTO>> modify(@RequestBody ProductDTO modification){
-        try {
-            Optional<Product> productToBeModified = productService.findProductByProductId(modification.getProductId());
-            if(productToBeModified.isEmpty()){
-                throw new IllegalArgumentException("Product does not exits in repository!");
-            }
-
-            User user = userService.currentUser();
-        } catch (Exception e){
-            return null;
-        }
-
-        return null;
     }
 
 }

@@ -44,7 +44,7 @@ public class Product {
 
     @JsonProperty
     @Enumerated(EnumType.STRING)
-    private ProductCondition condition;
+    private ProductCondition productCondition;
 
     @JsonProperty
     private Boolean available;
@@ -57,7 +57,7 @@ public class Product {
         this.description = description;
         this.price = price;
         this.creationDate = LocalDateTime.now();
-        this.condition = condition;
+        this.productCondition = condition;
         this.available = stock > 0;
     }
 }
