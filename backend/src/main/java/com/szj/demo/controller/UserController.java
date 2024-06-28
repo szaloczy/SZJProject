@@ -3,8 +3,6 @@ package com.szj.demo.controller;
 import com.szj.demo.model.AuthenticationResponse;
 import com.szj.demo.model.User;
 import com.szj.demo.model.UserResponse;
-import com.szj.demo.service.JwtService;
-import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;

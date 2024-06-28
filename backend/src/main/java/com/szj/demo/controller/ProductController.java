@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/products")
@@ -20,7 +22,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-    Product product;
+    private final UserService userService;
 
     @GetMapping()
     public List<Product> getAll(){
@@ -37,6 +39,22 @@ public class ProductController {
         } catch (HttpServerErrorException.InternalServerError e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("Endpoint not found"));
         }
+    }
+
+    @PutMapping()
+    public ResponseEntity<ApiResponse<ProductDTO>> modify(@RequestBody ProductDTO modification){
+        try {
+            Optional<Product> productToBeModified = productService.findProductByProductId(modification.getProductId());
+            if(productToBeModified.isEmpty()){
+                throw new IllegalArgumentException("Product does not exits in repository!");
+            }
+
+            User user = userService.currentUser();
+        } catch (Exception e){
+            return null;
+        }
+
+        return null;
     }
 
 }

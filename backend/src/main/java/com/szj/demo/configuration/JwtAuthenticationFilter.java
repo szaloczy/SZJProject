@@ -1,6 +1,5 @@
 package com.szj.demo.configuration;
 
-import com.szj.demo.service.JwtService;
 import com.szj.demo.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
