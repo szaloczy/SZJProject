@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.NoSuchElementException;
+
 @RestController
 @RequestMapping("api/user")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -30,13 +32,16 @@ public class UserController {
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PUBLIC)
-    @PostMapping( value = "auth/login")
+    @PostMapping(value = "auth/login")
     public ResponseEntity<ApiResponse<String>> login(@RequestBody User user) {
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, userService.login(user), ""));
+            String token = userService.login(user);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, token, ""));
+        }catch (NoSuchElementException | IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(null);
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 

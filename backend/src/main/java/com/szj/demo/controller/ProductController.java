@@ -1,6 +1,9 @@
 package com.szj.demo.controller;
 
+import com.szj.demo.annotations.RequiredAuthenticationLevel;
 import com.szj.demo.dtos.ProductDTO;
+import com.szj.demo.enums.AuthenticationLevel;
+import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.Product;
 import com.szj.demo.model.ProductRequest;
@@ -29,17 +32,18 @@ public class ProductController {
     public List<Product> getAll(){
         return productService.getAll();
     }
-
+/*
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping()
-    public ResponseEntity<ApiResponse<ProductDTO>> createProduct(@RequestHeader(HttpHeaders.AUTHORIZATION) String jwtToken, @RequestBody ProductRequest myProduct){
-        try {
-            ProductDTO productDTO = productService.createProduct(jwtToken, myProduct);
-            return ResponseEntity.ok().body(new ApiResponse<>(productDTO));
-        } catch (IllegalStateException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>("Product creation failed"));
-        } catch (HttpServerErrorException.InternalServerError e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("Endpoint not found"));
+    public ResponseEntity<ApiResponse<ProductDTO>> createProduct(@RequestBody Product myProduct){
+        try{
+            ProductDTO productDTO = productService.createProduct(userService.currentUser(), myProduct);
+            return ResponseEntity.ok().body(new ApiResponse<>(true, productDTO,""));
+        } catch (IllegalStateException | InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Product creation failed!"));
+        } catch (HttpServerErrorException.InternalServerError) {
+            return ResponseEntity<>
         }
     }
-
+˛*/
 }

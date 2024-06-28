@@ -70,23 +70,26 @@ public class UserService {
      * @throws IllegalAccessException If the username does not exist or the password is incorrect.
      */
 
-   public String login(User user) throws NoSuchElementException, IllegalAccessException {
-       Optional<User> foundUser = userRepository.findUserByUsername(user.getUsername()) ;
-       if (foundUser.isEmpty()){
-           throw new NoSuchElementException("Username does not exits!");
-       }
+    public String login(User user) throws NoSuchElementException, IllegalAccessException {
+        Optional<User> foundUser = userRepository.findUserByUsername(user.getUsername());
+        if(foundUser.isEmpty()) throw new NoSuchElementException("Username does not exist!");
 
-       if(!foundUser.get().getPassword().equals(user.getPassword())) {
-           throw new IllegalAccessException("Incorrect username or password!");
-       }
+        // Proper password decoding and matching...
+        if(!passwordEncoder.matches(user.getPassword(), foundUser.get().getPassword())) throw new IllegalAccessException("Incorrect username or password!");
 
-       activeTokens.remove(foundUser.get());
+        // Remove old token if by some miracle it wasn't cleaned up.
+        activeTokens.remove(foundUser.get());
 
-       String token = generateToken(foundUser.get());
-       activeTokens.put(foundUser.get(), token);
+        String token = generateToken(foundUser.get());
+        activeTokens.put(foundUser.get(), token);
 
-       return token;
-   }
+        return token;
+    }
+    /**
+     * Logs out the current user by removing their active token.
+     *
+     * @throws InvalidTokenException if the user has no active token or the token has expired
+     */
 
    public void logout() throws InvalidTokenException {
        User user = currentUser();
