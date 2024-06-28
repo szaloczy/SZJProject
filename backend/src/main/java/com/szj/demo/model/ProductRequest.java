@@ -8,15 +8,17 @@ import lombok.Setter;
 @Setter
 public class ProductRequest {
 
-    private String productDescription;
     private String productName;
+    private String productDescription;
     private ProductCondition productCondition;
     private Double price;
+    private Integer stock;
 
-    public ProductRequest(String productDescription, String productName, ProductCondition productCondition, Double price) {
+    public ProductRequest(String productName, String productDescription, ProductCondition productCondition, Double price, Integer stock) {
         this.productDescription = productDescription;
         this.productName = productName;
         this.productCondition = productCondition;
         this.price = price;
+        this.stock = stock;
     }
 }

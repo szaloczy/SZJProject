@@ -16,11 +16,8 @@ import java.util.UUID;
 public class Product {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "product_id", updatable = false, nullable = false, length = 36)
-    @JsonProperty
-    private UUID productId;
+    @GeneratedValue
+    private long productId;
 
     @JsonProperty
     @Column(nullable = false)
@@ -51,13 +48,14 @@ public class Product {
 
     public Product() {}
 
-    public Product(String name, String description, Double price, String brand, String category, Integer stock, String imageUrl, ProductCondition condition) {
-        this.productId = UUID.randomUUID();
-        this.productName = name;
+    public Product(String sellerName, String productName, String description, ProductCondition condition, Double price, Integer stock) {
+        this.seller = sellerName;
+        this.productName = productName;
         this.description = description;
         this.price = price;
         this.creationDate = LocalDateTime.now();
         this.productCondition = condition;
+        this.stock = stock;
         this.available = stock > 0;
     }
 }

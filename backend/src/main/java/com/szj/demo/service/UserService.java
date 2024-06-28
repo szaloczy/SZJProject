@@ -103,20 +103,29 @@ public class UserService {
      * @throws InvalidTokenException If there is a problem with the token, such as it being invalid, expired, or associated with a user that does not exist or has no active token.
      */
     public User currentUser() throws InvalidTokenException {
-        String token;
-        if(request.getHeader("Authorization").startsWith("Bearer ")){
-            token = request.getHeader("Authorization").substring("Bearer ".length());
-        } else {
-            throw new InvalidTokenException("Problem with token!");
+        String authorizationHeader = request.getHeader("Authorization");
+        if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+           throw new InvalidTokenException("Authorization header is missing or invalid!");
         }
 
-        String potentialUser = extractClaim(token, Claims::getSubject);
-        Optional<User> user = userRepository.findUserByUsername(potentialUser);
-        if(user.isEmpty()) throw new InvalidTokenException("Username does not exits!");
-        if(!activeTokens.containsValue(user.get())) throw new InvalidTokenException("User has no token associated with it!");
-        if(isTokenExpired(activeTokens.get(user.get()))) throw new InvalidTokenException("Token expired!");
+        String token = authorizationHeader.substring("Bearer ".length());
 
-        return user.get();
+        String potentialUser = extractClaim(token, Claims::getSubject);
+        Optional<User> optionalUser = userRepository.findUserByUsername(potentialUser);
+
+        if(optionalUser.isEmpty()) throw new InvalidTokenException("User not found for token!");
+
+        User user = optionalUser.get();
+
+        if(!activeTokens.containsKey(user)){
+            throw new InvalidTokenException("User has no active token associated!");
+        }
+
+        if(isTokenExpired(activeTokens.get(user))){
+            throw new InvalidTokenException("Token expired");
+        }
+
+        return user;
     }
 
     /**

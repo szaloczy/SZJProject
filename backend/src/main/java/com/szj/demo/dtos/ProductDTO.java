@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ProductDTO {
     @JsonProperty
-    private String productId;
+    private Long productId;
 
     @JsonProperty
     @Column(nullable = false)
@@ -47,7 +47,7 @@ public class ProductDTO {
     private Boolean available;
 
     public ProductDTO(Product product){
-        this.productId = product.getProductId().toString();
+        this.productId = product.getProductId();
         this.productName = product.getProductName();
         this.seller = product.getSeller();
         this.description = product.getDescription();
