@@ -2,6 +2,7 @@ package com.szj.demo.controller;
 
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
 import com.szj.demo.dtos.ProductDTO;
+import com.szj.demo.dtos.ProductUpdateDTO;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.ApiResponse;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/products")
+@CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class ProductController {
 
@@ -58,5 +60,14 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    /*
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PutMapping
+    public ResponseEntity<ApiResponse<ProductDTO>> modify(@RequestBody ProductUpdateDTO modification){
+        try {
+            Optional<Product> productToBeModified = productService
+        }
+    }*/
 
 }
