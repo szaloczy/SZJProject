@@ -8,6 +8,7 @@ import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.Product;
 import com.szj.demo.model.ProductRequest;
+import com.szj.demo.model.User;
 import com.szj.demo.service.ProductService;
 import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -57,7 +57,7 @@ public class ProductController {
         }
     }
 
-/*
+
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PutMapping
     public ResponseEntity<ApiResponse<ProductDTO>> modify(@RequestBody ProductUpdateDTO modification){
@@ -73,7 +73,14 @@ public class ProductController {
             }
 
             productToBeModified.get().update(modification);
-        } catch ()
-    }*/
+            Product updatedProduct = productService.updateProductByProductId(productToBeModified.get());
+
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, new ProductDTO(updatedProduct), ""));
+        } catch(IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null,e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false,null,e.getMessage()));
+        }
+    }
 
 }

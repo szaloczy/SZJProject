@@ -1,6 +1,7 @@
 package com.szj.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.szj.demo.dtos.ProductUpdateDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,5 +54,29 @@ public class Product {
         this.productCondition = condition;
         this.stock = stock;
         this.available = stock > 0;
+    }
+
+    public void update(ProductUpdateDTO modification) {
+        if(productId != modification.getProductId())
+            throw new IllegalArgumentException("Cannot update because the product id does not match");
+
+        if(modification.getProductName().isEmpty())
+           throw new IllegalArgumentException("Product name can't be empty");
+        if(modification.getProductName().length() < 3 || modification.getProductName().length() > 25)
+            throw new IllegalArgumentException("Product name cannot be less than 3, or more than 50 characters!");
+
+        this.productName = modification.getProductName();
+
+        if(modification.getProductDescription().isEmpty())
+            throw new IllegalArgumentException("Product description cannot be empty");
+        if(modification.getProductDescription().length() < 3 || modification.getProductDescription().length() > 100)
+            throw new IllegalArgumentException("Product description cannot be less than 3, or more than 100 character");
+
+        this.description = modification.getProductDescription();
+
+        if(modification.getPrice() < 0)
+            throw new IllegalArgumentException("Product price must be grater than 0!");
+
+        this.price = modification.getPrice();
     }
 }
