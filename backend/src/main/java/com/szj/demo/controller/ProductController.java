@@ -42,32 +42,38 @@ public class ProductController {
     @PostMapping()
     public ResponseEntity<ApiResponse<ProductDTO>> createProduct(@RequestBody ProductRequest myProduct){
 
-        Logger logger = LoggerFactory.getLogger(getClass());
         try{
             ProductDTO productDTO = productService.createProduct(userService.currentUser(), myProduct);
             return ResponseEntity.ok().body(new ApiResponse<>(true, productDTO,""));
         } catch (InvalidTokenException e) {
-            logger.error("Invalid token: ", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token!"));
         }
         catch (IllegalStateException e) {
-            logger.error("Product creation failed: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Product creation failed!"));
         } catch (HttpServerErrorException.InternalServerError e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null, "Endpoint not found"));
         } catch (Exception e) {
-            logger.error("Unexpected error: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 
-    /*
+/*
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PutMapping
     public ResponseEntity<ApiResponse<ProductDTO>> modify(@RequestBody ProductUpdateDTO modification){
         try {
-            Optional<Product> productToBeModified = productService
-        }
+            Optional<Product> productToBeModified = productService.findProductByProductId(modification.getProductId());
+            if(productToBeModified.isEmpty()){
+                throw new IllegalArgumentException("Auction does not exist!");
+            }
+
+            User user = userService.currentUser();
+            if(!productToBeModified.get().getSeller().equals(user.getUsername())) {
+                throw new IllegalAccessException("User does not have access to modify");
+            }
+
+            productToBeModified.get().update(modification);
+        } catch ()
     }*/
 
 }

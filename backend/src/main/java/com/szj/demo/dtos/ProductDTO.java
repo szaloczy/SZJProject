@@ -1,11 +1,8 @@
 package com.szj.demo.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.szj.demo.enums.ProductCondition;
 import com.szj.demo.model.Product;
 import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,8 +37,7 @@ public class ProductDTO {
     private LocalDateTime creationDate;
 
     @JsonProperty
-    @Enumerated(EnumType.STRING)
-    private ProductCondition condition;
+    private String condition;
 
     @JsonProperty
     private Boolean available;
