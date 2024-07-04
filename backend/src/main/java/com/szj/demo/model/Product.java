@@ -1,7 +1,7 @@
 package com.szj.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.szj.demo.dtos.ProductUpdateDTO;
+import com.szj.demo.dtos.product.ProductUpdateDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

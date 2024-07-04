@@ -1,8 +1,8 @@
 package com.szj.demo.controller;
 
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
-import com.szj.demo.dtos.ProductDTO;
-import com.szj.demo.dtos.ProductUpdateDTO;
+import com.szj.demo.dtos.product.ProductDTO;
+import com.szj.demo.dtos.product.ProductUpdateDTO;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.ApiResponse;
@@ -12,14 +12,12 @@ import com.szj.demo.model.User;
 import com.szj.demo.service.ProductService;
 import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,8 +66,9 @@ public class ProductController {
             }
 
             User user = userService.currentUser();
+
             if(!productToBeModified.get().getSeller().equals(user.getUsername())) {
-                throw new IllegalAccessException("User does not have access to modify");
+                throw new AccessDeniedException("User does not have access to modify");
             }
 
             productToBeModified.get().update(modification);
@@ -78,7 +77,11 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, new ProductDTO(updatedProduct), ""));
         } catch(IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null,e.getMessage()));
-        } catch (Exception e) {
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false,null,e.getMessage()));
         }
     }

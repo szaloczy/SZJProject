@@ -1,12 +1,10 @@
 package com.szj.demo.service;
-import com.szj.demo.dtos.ProductDTO;
+import com.szj.demo.dtos.product.ProductDTO;
 import com.szj.demo.model.Product;
 import com.szj.demo.model.ProductRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
