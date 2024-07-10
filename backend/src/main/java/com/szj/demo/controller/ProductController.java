@@ -86,4 +86,19 @@ public class ProductController {
         }
     }
 
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Long>> deleteProduct(@RequestParam Long productId) {
+        try{
+            Optional<Product> productToBeDeleted = productService.findProductByProductId(productId);
+            if(productToBeDeleted.isEmpty()) throw new IllegalArgumentException("Product does not exists in repository");
+            Product product = productToBeDeleted.get();
+
+            productService.delete(product, userService.currentUser());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true,null,""));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,null,e.getMessage()));
+        }
+    }
+
 }

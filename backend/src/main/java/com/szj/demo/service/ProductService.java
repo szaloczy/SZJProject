@@ -4,6 +4,7 @@ import com.szj.demo.model.Product;
 import com.szj.demo.model.ProductRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -67,5 +68,14 @@ public class ProductService {
 
     public Product updateProductByProductId(Product product){
         return productRepository.save(product);
+    }
+
+    @Transactional
+    public void delete(Product product, User user){
+        if(user.getUsername().equals(product.getSeller())) {
+            productRepository.deleteProductByProductId(product.getProductId());
+        } else {
+            throw new IllegalArgumentException("You do not own this product");
+        }
     }
 }
