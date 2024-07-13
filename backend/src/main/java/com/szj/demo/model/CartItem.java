@@ -14,17 +14,15 @@ import lombok.Setter;
 @Entity
 public class CartItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartItemId;
 
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    private Cart cart;
 
-    @OneToOne
-    @JsonIgnoreProperties(value={
-            "productId",
-            "seller",
-            "quantity"
-    })
-
+    @ManyToOne
+    @JoinColumn(name = "product_id")
     private Product cartProduct;
 
     private Integer cartItemQuantity;
