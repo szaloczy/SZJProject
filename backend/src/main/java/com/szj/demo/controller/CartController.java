@@ -18,24 +18,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/carts")
+@CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
     private final ProductService productService;
     private final UserService userService;
-
-    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Cart>> createCart() {
-        try {
-            Cart cart = cartService.createCart(userService.currentUser());
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, null, ""));
-        }catch (InvalidTokenException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,null,"Token expired!"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,null,e.getMessage()));
-        }
-    }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping

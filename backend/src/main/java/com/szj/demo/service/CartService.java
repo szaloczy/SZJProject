@@ -23,7 +23,6 @@ public class CartService {
     public Cart createCart(User user) {
         Cart cart = new Cart();
         cart.setUser(user);
-        cart.setCartTotal(0.0);
         return cartRepository.save(cart);
     }
 
@@ -36,7 +35,13 @@ public class CartService {
     }
 
     public CartItemDTO addItemToCart(User user, Product product, int quantity) {
-        Cart cart = getCartByUser(user);
+        Cart cart = cartRepository.findCartByUser(user)
+                .orElseGet(() -> {
+                   Cart newCart = new Cart();
+                   newCart.setUser(user);
+                   return cartRepository.save(newCart);
+                });
+
         Optional<CartItem> existingItem = cart.getCartItems().stream()
                 .filter(item -> item.getCartProduct().equals(product))
                 .findFirst();
