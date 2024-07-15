@@ -1,6 +1,7 @@
 package com.szj.demo.dtos.product;
 
 import com.szj.demo.model.Cart;
+import com.szj.demo.model.CartItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,10 @@ public class CartItemDTO {
             this.productId = cart.getCartItems().get(0).getCartItemId();
             this.quantity = cart.getCartItems().get(0).getCartItemQuantity();
         }
+    }
+
+    public CartItemDTO(CartItem cartItem) {
+        productId = cartItem.getCartProduct().getProductId();
+        quantity = cartItem.getCartItemQuantity();
     }
 }

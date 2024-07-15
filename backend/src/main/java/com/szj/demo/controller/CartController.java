@@ -1,6 +1,7 @@
 package com.szj.demo.controller;
 
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
+import com.szj.demo.dtos.product.CartDTO;
 import com.szj.demo.dtos.product.CartItemDTO;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
@@ -25,12 +26,14 @@ public class CartController {
     private final ProductService productService;
     private final UserService userService;
 
+
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping
-    public ResponseEntity<ApiResponse<Cart>> getCart(User user) {
+    public ResponseEntity<ApiResponse<CartDTO>> getCart(Long userId) {
         try {
-            Cart cart = cartService.getCartByUser(user);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cart, ""));
+            Cart cart = cartService.getCartByUser(userId);
+            CartDTO cartDTO = new CartDTO(cart);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartDTO, ""));
         }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Something went wrong"));
         }

@@ -152,6 +152,7 @@ public class UserService {
        Map<String, Object> userDetails = new HashMap<>();
        userDetails.put("Password",user.getPassword());
        userDetails.put("AccessLevel",user.getAccessLevel());
+       userDetails.put("UserId", user.getId());
        userClaims.put(user.getUsername(), userDetails);
 
        return Jwts

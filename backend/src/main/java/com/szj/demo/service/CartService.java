@@ -20,14 +20,14 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
 
-    public Cart createCart(User user) {
-        Cart cart = new Cart();
-        cart.setUser(user);
-        return cartRepository.save(cart);
-    }
+    public Cart getCartByUser(Long userId){
+        return cartRepository.findCartByUserId(userId).orElseGet(() -> {
+            Optional<User> optUser = userRepository.findById(userId);
 
-    public Cart getCartByUser(User user){
-        return cartRepository.findCartByUser(user).orElseGet(() -> {
+            if(optUser.isEmpty()) {
+                throw new IllegalArgumentException("User does not exists in repository!");
+            }
+            User user = optUser.get();
             Cart cart = new Cart();
             cart.setUser(user);
             return cartRepository.save(cart);
@@ -62,13 +62,13 @@ public class CartService {
     }
 
     public Cart removeItemFromCart(User user, Product product) {
-        Cart cart = getCartByUser(user);
+        Cart cart = getCartByUser(user.getId());
         cart.getCartItems().removeIf(item -> item.getCartProduct().equals(product));
         return cartRepository.save(cart);
     }
 
     public void clearCart(User user) {
-        Cart cart = getCartByUser(user);
+        Cart cart = getCartByUser(user.getId());
         cart.getCartItems().clear();
         cartRepository.save(cart);
     }

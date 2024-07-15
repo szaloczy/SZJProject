@@ -24,5 +24,4 @@ public class Cart {
     @OneToOne(cascade = CascadeType.ALL)
     @JsonIgnore
     private User user;
-
 }
