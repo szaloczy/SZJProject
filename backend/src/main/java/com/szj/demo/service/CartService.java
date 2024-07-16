@@ -11,7 +11,9 @@ import com.szj.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -20,7 +22,7 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
 
-    public Cart getCartByUser(Long userId){
+    public Cart getCartByUserId(Long userId){
         return cartRepository.findCartByUserId(userId).orElseGet(() -> {
             Optional<User> optUser = userRepository.findById(userId);
 
@@ -61,14 +63,42 @@ public class CartService {
         return new CartItemDTO(savedCart);
     }
 
-    public Cart removeItemFromCart(User user, Product product) {
-        Cart cart = getCartByUser(user.getId());
-        cart.getCartItems().removeIf(item -> item.getCartProduct().equals(product));
+    public Cart removeItemFromCart(User user, Product product, int quantityToRemove) {
+        Cart cart = getCartByUserId(user.getId());
+
+        List<CartItem> itemsToRemove = cart.getCartItems().stream()
+                .filter(item -> item.getCartProduct().equals(product))
+                .collect(Collectors.toList());
+
+        // Törlés a megadott mennyiségig (quantityToRemove)
+        int removedCount = 0;
+        for (CartItem item : itemsToRemove) {
+            if (removedCount >= quantityToRemove) {
+                break;
+            }
+            // Ha a kosárban lévő mennyiség (item quantity) nagyobb vagy egyenlő a törlendő mennyiséggel
+            if (item.getCartItemQuantity() >= quantityToRemove) {
+                item.setCartItemQuantity(item.getCartItemQuantity() - quantityToRemove);
+                removedCount += quantityToRemove;
+
+                if (item.getCartItemQuantity() == 0) {
+                    cart.getCartItems().remove(item); // Elem eltávolítása a kosárból
+                    cartItemRepository.delete(item); // Elem törlése az adatbázisból
+                }
+            } else {
+                // Ha kevesebb van a kosárban, mint a törlendő mennyiség
+                removedCount += item.getCartItemQuantity();
+                cart.getCartItems().remove(item);
+                cartItemRepository.delete(item); // Elem törlése az adatbázisból
+            }
+        }
+
+        cart.getCartItems().removeIf(item -> item.getCartItemQuantity() == 0);
         return cartRepository.save(cart);
     }
 
     public void clearCart(User user) {
-        Cart cart = getCartByUser(user.getId());
+        Cart cart = getCartByUserId(user.getId());
         cart.getCartItems().clear();
         cartRepository.save(cart);
     }

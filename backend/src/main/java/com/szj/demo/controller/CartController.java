@@ -9,7 +9,6 @@ import com.szj.demo.model.*;
 import com.szj.demo.service.CartService;
 import com.szj.demo.service.ProductService;
 import com.szj.demo.service.UserService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +30,7 @@ public class CartController {
     @GetMapping
     public ResponseEntity<ApiResponse<CartDTO>> getCart(Long userId) {
         try {
-            Cart cart = cartService.getCartByUser(userId);
+            Cart cart = cartService.getCartByUserId(userId);
             CartDTO cartDTO = new CartDTO(cart);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartDTO, ""));
         }catch (Exception e) {
@@ -65,7 +64,7 @@ public class CartController {
             }
 
             Product product = optProduct.get();
-            Cart cart = cartService.removeItemFromCart(userService.currentUser(), product);
+            Cart cart = cartService.removeItemFromCart(userService.currentUser(), product, cartItemDTO.getQuantity());
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cart, ""));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Something went wrong"));
