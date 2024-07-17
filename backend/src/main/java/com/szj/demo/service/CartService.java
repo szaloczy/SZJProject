@@ -22,11 +22,11 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
 
-    public Cart getCartByUserId(Long userId){
+    public Cart getCartByUserId(Long userId) {
         return cartRepository.findCartByUserId(userId).orElseGet(() -> {
             Optional<User> optUser = userRepository.findById(userId);
 
-            if(optUser.isEmpty()) {
+            if (optUser.isEmpty()) {
                 throw new IllegalArgumentException("User does not exists in repository!");
             }
             User user = optUser.get();
@@ -39,16 +39,16 @@ public class CartService {
     public CartItemDTO addItemToCart(User user, Product product, int quantity) {
         Cart cart = cartRepository.findCartByUser(user)
                 .orElseGet(() -> {
-                   Cart newCart = new Cart();
-                   newCart.setUser(user);
-                   return cartRepository.save(newCart);
+                    Cart newCart = new Cart();
+                    newCart.setUser(user);
+                    return cartRepository.save(newCart);
                 });
 
         Optional<CartItem> existingItem = cart.getCartItems().stream()
                 .filter(item -> item.getCartProduct().equals(product))
                 .findFirst();
 
-        if(existingItem.isPresent()) {
+        if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setCartItemQuantity(item.getCartItemQuantity() + quantity);
             cartItemRepository.save(item);
@@ -68,39 +68,38 @@ public class CartService {
 
         List<CartItem> itemsToRemove = cart.getCartItems().stream()
                 .filter(item -> item.getCartProduct().equals(product))
-                .collect(Collectors.toList());
+                .toList();
 
-        // Törlés a megadott mennyiségig (quantityToRemove)
         int removedCount = 0;
         for (CartItem item : itemsToRemove) {
             if (removedCount >= quantityToRemove) {
                 break;
             }
-            // Ha a kosárban lévő mennyiség (item quantity) nagyobb vagy egyenlő a törlendő mennyiséggel
             if (item.getCartItemQuantity() >= quantityToRemove) {
                 item.setCartItemQuantity(item.getCartItemQuantity() - quantityToRemove);
                 removedCount += quantityToRemove;
 
                 if (item.getCartItemQuantity() == 0) {
-                    cart.getCartItems().remove(item); // Elem eltávolítása a kosárból
-                    cartItemRepository.delete(item); // Elem törlése az adatbázisból
+                    cart.getCartItems().remove(item);
+                    cartItemRepository.delete(item);
                 }
             } else {
-                // Ha kevesebb van a kosárban, mint a törlendő mennyiség
                 removedCount += item.getCartItemQuantity();
                 cart.getCartItems().remove(item);
-                cartItemRepository.delete(item); // Elem törlése az adatbázisból
+                cartItemRepository.delete(item);
             }
         }
 
-        cart.getCartItems().removeIf(item -> item.getCartItemQuantity() == 0);
-        return cartRepository.save(cart);
+            cart.getCartItems().removeIf(item -> item.getCartItemQuantity() == 0);
+            return cartRepository.save(cart);
+
     }
 
-    public void clearCart(User user) {
-        Cart cart = getCartByUserId(user.getId());
-        cart.getCartItems().clear();
-        cartRepository.save(cart);
+        public void clearCart (User user){
+            Cart cart = getCartByUserId(user.getId());
+            cart.getCartItems().clear();
+            cartRepository.save(cart);
+        }
+
     }
 
-}
