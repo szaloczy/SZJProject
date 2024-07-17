@@ -56,7 +56,7 @@ public class CartController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping("/remove")
-    public ResponseEntity<ApiResponse<Cart>> removeItemFromCart(@RequestBody CartItemDTO cartItemDTO){
+    public ResponseEntity<ApiResponse<CartDTO>> removeItemFromCart(@RequestBody CartItemDTO cartItemDTO){
         try {
             Optional<Product> optProduct = productService.findProductByProductId(cartItemDTO.getProductId());
             if (optProduct.isEmpty()) {
@@ -65,9 +65,11 @@ public class CartController {
 
             Product product = optProduct.get();
             Cart cart = cartService.removeItemFromCart(userService.currentUser(), product, cartItemDTO.getQuantity());
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cart, ""));
+
+            CartDTO cartDTO = new CartDTO(cart);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartDTO, ""));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Something went wrong"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
         }
 
