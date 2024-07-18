@@ -2,6 +2,8 @@ package com.szj.demo.controller;
 
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
 import com.szj.demo.enums.AuthenticationLevel;
+import com.szj.demo.exception.InvalidTokenException;
+import com.szj.demo.model.Address;
 import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.User;
 import com.szj.demo.service.UserService;
@@ -54,5 +56,19 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
         }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PostMapping(value = "update/address")
+    public ResponseEntity<ApiResponse<Address>> updateAddress(@RequestBody Address address) {
+        try{
+            userService.updateUserAddress(userService.currentUser(),address);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, address, ""));
+        } catch (InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+
     }
 }

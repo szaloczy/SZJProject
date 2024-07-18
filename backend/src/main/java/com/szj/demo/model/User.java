@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -34,6 +35,13 @@ public class User {
 
     @JsonProperty("accessLevel")
     private AuthenticationLevel accessLevel;
+
+    @Column
+    private BigDecimal balance = BigDecimal.ZERO;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private Address address;
 
     public User() {
     }

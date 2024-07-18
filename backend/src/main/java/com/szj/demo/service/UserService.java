@@ -2,6 +2,7 @@ package com.szj.demo.service;
 
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
+import com.szj.demo.model.Address;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -10,12 +11,14 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
@@ -34,6 +37,27 @@ public class UserService {
     private final HttpServletRequest request;
     private final Map<User, String> activeTokens = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional
+    public void updateUserBalance(User user, BigDecimal amount) {
+        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
+        if(optUser.isEmpty()){
+            throw new IllegalArgumentException("User does not exists in repository");
+        }
+        User updatedUser = optUser.get();
+        updatedUser.setBalance(user.getBalance().add(amount));
+        userRepository.save(updatedUser);
+    }
+
+    public void updateUserAddress(User user, Address newAddress){
+        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
+        if(optUser.isEmpty()){
+            throw new IllegalArgumentException("User does not exists in repository");
+        }
+        User updatedUser = optUser.get();
+        updatedUser.setAddress(newAddress);
+        userRepository.save(updatedUser);
+    }
 
     /**
      * Registers a new user with the given username and password.
