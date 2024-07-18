@@ -8,31 +8,23 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-/*
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data*/
+@Data
+@Table(name="orders")
 public class Order {
-    /*
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
-
-    //@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
-
     @OneToOne
     private User user;
-
     private LocalDateTime orderDate;
     private String status;
+    private double totalPrice;
 
-    @Transient
-    public Double getTotalAmount() {
-        return orderItems.stream()
-                .mapToDouble(OrderItem::getPrice)
-                .sum();
-    }
-*/
 }

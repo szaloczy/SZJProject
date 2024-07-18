@@ -1,6 +1,6 @@
 package com.szj.demo.service;
 
-import com.szj.demo.dtos.product.CartItemDTO;
+import com.szj.demo.dtos.cart.CartItemDTO;
 import com.szj.demo.model.Cart;
 import com.szj.demo.model.CartItem;
 import com.szj.demo.model.Product;
@@ -8,12 +8,12 @@ import com.szj.demo.model.User;
 import com.szj.demo.repository.CartItemRepository;
 import com.szj.demo.repository.CartRepository;
 import com.szj.demo.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -95,10 +95,17 @@ public class CartService {
 
     }
 
+    @Transactional
         public void clearCart (User user){
-            Cart cart = getCartByUserId(user.getId());
-            cart.getCartItems().clear();
-            cartRepository.save(cart);
+         Optional<Cart> optCart = cartRepository.findCartByUser(user);
+         if(optCart.isEmpty()) {
+             throw new IllegalArgumentException("Cart does not exists in repository!");
+         }
+
+            Cart cart = optCart.get();
+         cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
+         cart.getCartItems().clear();
+         cartRepository.save(cart);
         }
 
     }

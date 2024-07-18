@@ -1,8 +1,8 @@
 package com.szj.demo.controller;
 
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
-import com.szj.demo.dtos.product.CartDTO;
-import com.szj.demo.dtos.product.CartItemDTO;
+import com.szj.demo.dtos.cart.CartDTO;
+import com.szj.demo.dtos.cart.CartItemDTO;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.*;

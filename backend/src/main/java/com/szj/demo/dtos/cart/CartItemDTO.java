@@ -1,4 +1,4 @@
-package com.szj.demo.dtos.product;
+package com.szj.demo.dtos.cart;
 
 import com.szj.demo.model.Cart;
 import com.szj.demo.model.CartItem;

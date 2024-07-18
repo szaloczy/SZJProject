@@ -1,9 +1,7 @@
 package com.szj.demo.dtos.product;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.szj.demo.model.Product;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class ProductUpdateDTO {
