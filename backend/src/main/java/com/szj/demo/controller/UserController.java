@@ -5,6 +5,7 @@ import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
 import com.szj.demo.model.ApiResponse;
+import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -69,6 +71,17 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
+    }
 
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PostMapping(value = "update/balance")
+    public ResponseEntity<ApiResponse<String>> updateBalance(@RequestBody UpdateBalanceRequest updateBalanceRequest) {
+        try {
+            User currentUser = userService.currentUser();
+            userService.updateUserBalance(currentUser, updateBalanceRequest.getNewBalance());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, updateBalanceRequest.getNewBalance().toString(), ""));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
     }
 }
