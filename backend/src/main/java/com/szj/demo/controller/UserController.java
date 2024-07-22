@@ -80,7 +80,23 @@ public class UserController {
             User currentUser = userService.currentUser();
             userService.updateUserBalance(currentUser, updateBalanceRequest.getNewBalance());
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, updateBalanceRequest.getNewBalance().toString(), ""));
+        }catch (InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @GetMapping(value = "balance")
+    public ResponseEntity<ApiResponse<BigDecimal>> getBalance(User user){
+        try {
+            User currentUser = userService.currentUser();
+            BigDecimal balance = userService.getBalance(currentUser);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, balance,""));
+        }catch (InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
+        }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }

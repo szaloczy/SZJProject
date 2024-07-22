@@ -49,6 +49,14 @@ public class UserService {
         userRepository.save(updatedUser);
     }
 
+    public BigDecimal getBalance(User user) {
+        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
+        if(optUser.isEmpty()){
+            throw new IllegalArgumentException("User does not exists in repository");
+        }
+        return optUser.get().getBalance();
+    }
+
     public void updateUserAddress(User user, Address newAddress){
         Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
         if(optUser.isEmpty()){
