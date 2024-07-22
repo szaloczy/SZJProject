@@ -89,15 +89,12 @@ public class UserController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping(value = "balance")
-    public ResponseEntity<ApiResponse<BigDecimal>> getBalance(User user){
+    public ResponseEntity<ApiResponse<BigDecimal>> getBalance(@RequestParam("id") Long userId){
         try {
-            User currentUser = userService.currentUser();
-            BigDecimal balance = userService.getBalance(currentUser);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, balance,""));
-        }catch (InvalidTokenException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+            BigDecimal balance = userService.getBalance(userId);
+            return ResponseEntity.ok(new ApiResponse<>(true, balance, ""));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 }
