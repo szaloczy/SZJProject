@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class Order {
     private List<OrderItem> orderItems = new ArrayList<>();
     @OneToOne
     private User user;
-    private LocalDateTime orderDate;
+    private LocalDate orderDate;
     private String status;
     private double totalPrice;
 

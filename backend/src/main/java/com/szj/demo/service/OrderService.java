@@ -1,5 +1,6 @@
 package com.szj.demo.service;
 
+import com.szj.demo.dtos.order.OrderDTO;
 import com.szj.demo.model.Cart;
 import com.szj.demo.model.Order;
 import com.szj.demo.model.OrderItem;
@@ -12,6 +13,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,14 +28,14 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
-   public Order createOrder(User user) {
+   public OrderDTO createOrder(User user) {
         Cart cart = cartRepository.findCartByUser(user)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
         Order order = new Order();
         order.setUser(user);
         order.setStatus("PENDING");
-        order.setOrderDate(LocalDateTime.now());
+        order.setOrderDate(LocalDate.now());
 
         double totalAmount = 0.0;
         List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
@@ -57,6 +59,6 @@ public class OrderService {
         cart.getCartItems().clear();
         cartRepository.save(cart);
 
-        return order;
+        return new OrderDTO(order);
     }
 }

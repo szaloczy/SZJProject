@@ -3,6 +3,7 @@ package com.szj.demo.service;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
+import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * The UserService class is responsible for managing user-related operations such as registration, login, and access control.
@@ -39,13 +38,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void updateUserBalance(User user, BigDecimal amount) {
+    public void updateUserBalance(User user, UpdateBalanceRequest updateBalanceRequest) {
         Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
         if(optUser.isEmpty()){
             throw new IllegalArgumentException("User does not exists in repository");
         }
+        validateCardDetails(updateBalanceRequest);
         User updatedUser = optUser.get();
-        updatedUser.setBalance(user.getBalance().add(amount));
+        updatedUser.setBalance(user.getBalance().add(updateBalanceRequest.getNewBalance()));
         userRepository.save(updatedUser);
     }
 
@@ -62,9 +62,25 @@ public class UserService {
         if(optUser.isEmpty()){
             throw new IllegalArgumentException("User does not exists in repository");
         }
+
         User updatedUser = optUser.get();
         updatedUser.setAddress(newAddress);
         userRepository.save(updatedUser);
+    }
+
+    private void validateCardDetails(UpdateBalanceRequest updateBalanceRequest) {
+
+        if(updateBalanceRequest.getCardNumber().length() < 13 || updateBalanceRequest.getCardNumber().length() > 16){
+            throw new IllegalArgumentException("Card number length should be between 13 and 16");
+        }
+
+        if(!updateBalanceRequest.getExpirationDate().matches("(?:0[1-9]|1[0-2])/[0-9]{2}")){
+            throw new IllegalArgumentException("Expiration date should be in the format MM/yy");
+        }
+
+        if (!updateBalanceRequest.getCvv().matches("\\d{3,4}")) {
+            throw new IllegalArgumentException("Invalid CVV");
+        }
     }
 
     /**
@@ -82,13 +98,12 @@ public class UserService {
             throw new IllegalStateException("The following username already exits: " + username);
         }
 
-        /*Encode password...*/
         String encodedPassword = passwordEncoder.encode(password);
         User user = new User(username, encodedPassword);
         userRepository.save(user);
 
         if(userRepository.findUserByUsername(username).isEmpty()){
-            throw new NoSuchElementException("Exception while saving to user repositroy!");
+            throw new NoSuchElementException("Exception while saving to user repository!");
         }
         return user;
     }

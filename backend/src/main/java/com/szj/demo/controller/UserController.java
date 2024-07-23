@@ -78,7 +78,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> updateBalance(@RequestBody UpdateBalanceRequest updateBalanceRequest) {
         try {
             User currentUser = userService.currentUser();
-            userService.updateUserBalance(currentUser, updateBalanceRequest.getNewBalance());
+            userService.updateUserBalance(currentUser, updateBalanceRequest);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, updateBalanceRequest.getNewBalance().toString(), ""));
         }catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
