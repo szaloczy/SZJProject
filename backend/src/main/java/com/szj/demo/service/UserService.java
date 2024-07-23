@@ -70,7 +70,9 @@ public class UserService {
 
     private void validateCardDetails(UpdateBalanceRequest updateBalanceRequest) {
 
-        if(updateBalanceRequest.getCardNumber().length() < 13 || updateBalanceRequest.getCardNumber().length() > 16){
+        String cardNumberSize = updateBalanceRequest.getCardNumber().replace("-","");
+
+        if(cardNumberSize.length() < 13 || cardNumberSize.length() > 16){
             throw new IllegalArgumentException("Card number length should be between 13 and 16");
         }
 

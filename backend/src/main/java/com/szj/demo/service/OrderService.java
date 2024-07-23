@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -53,12 +54,19 @@ public class OrderService {
         order.setOrderItems(orderItems);
         order.setTotalPrice(totalAmount);
 
-        orderRepository.save(order);
+        Order savedOrder =  orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
 
         cart.getCartItems().clear();
         cartRepository.save(cart);
 
-        return new OrderDTO(order);
+        return new OrderDTO(savedOrder);
+    }
+
+    public OrderDTO getOrder(Long userId) {
+        Optional<Order> optOrder = orderRepository.findOrderByUserId(userId);
+        if (optOrder.isEmpty()) throw new IllegalArgumentException("Order not found");
+
+        return new OrderDTO(optOrder.get());
     }
 }
