@@ -27,76 +27,57 @@ public class OrderService {
     private final ProductRepository productRepository;
 
     @Transactional
-   public OrderDTO createOrder(User user, Address address) {
-        try {
-                Cart cart = cartRepository.findCartByUser(user)
-                        .orElseThrow(() -> new RuntimeException("Cart not found"));
+   public Order createOrder(User user) {
+      Optional<Cart> optCart = cartRepository.findCartByUserId(user.getId());
 
+      if(optCart.isEmpty()){
+          throw new RuntimeException("Your cart is empty!");
+      }
 
+      Cart cart = optCart.get();
 
-            Order order = new Order();
-            order.setUser(user);
-            order.setStatus("PENDING");
-            order.setOrderDate(LocalDate.now());
-            if(address == null){
-                address = user.getAddress();
-            }
-            order.setDeliveryAddress(address);
+      Order order = new Order();
+      order.setUser(cart.getUser());
+      order.setOrderDate(LocalDate.now());
+      order.setStatus("Pending");
+      //order.setDeliveryAddress(user.getAddress().getCountry().concat("-").concat(user.getAddress().getCity()));
 
-                double totalAmount = 0.0;
-                List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setProduct(cartItem.getCartProduct());
-                    orderItem.setQuantity(cartItem.getCartItemQuantity());
-                    orderItem.setOrder(order);
-                    return orderItem;
-                }).toList();
+      List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
+          OrderItem orderItem = new OrderItem();
+          orderItem.setProduct(cartItem.getCartProduct());
+          orderItem.setQuantity(cartItem.getCartItemQuantity());
+          orderItem.setOrder(order);
+          return orderItem;
+      }).toList();
 
-                for (OrderItem orderItem : orderItems) {
-                    totalAmount += orderItem.getProduct().getPrice() * orderItem.getQuantity();
-                }
+      order.setOrderItems(orderItems);
+      order.setTotalPrice(cart.getCartItems().stream().mapToDouble(cartItem -> cartItem.getCartProduct().getPrice() * cartItem.getCartItemQuantity()).sum());
 
-                order.setOrderItems(orderItems);
-                order.setTotalPrice(totalAmount);
+      cart.getCartItems().clear();
+      cartRepository.save(cart);
 
-                for(OrderItem orderItem : orderItems){
-                    Product product = orderItem.getProduct();
-                    int newStock = product.getStock() - orderItem.getQuantity();
-                    if (newStock < 0) {
-                        throw new RuntimeException("Insufficient stock for product: " + product.getProductName());
-                    }
-                }
-
-                Order savedOrder = orderRepository.save(order);
-                orderItemRepository.saveAll(orderItems);
-
-                cart.getCartItems().clear();
-                cartRepository.save(cart);
-
-            return new OrderDTO(savedOrder);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Order creation failed: " + e.getMessage());
-        } catch (Exception e){
-            throw new IllegalArgumentException("Something went wrong: " +e.getMessage());
-        }
+      return orderRepository.save(order);
     }
 
     @Transactional
-    public void processPayment(User user, Long orderId){
-        Optional<Order> optOrder = orderRepository.findOrdersByUserId(user.getId());
-        if(optOrder.isEmpty()){
-            throw new IllegalArgumentException("Order does not exits in repository");
-        }
-        Order order = optOrder.get();
-
-        double totalAmount = order.getTotalPrice();
-
+    public void processPayment(User user, Address deliveryAddress){
+            Optional<Order> optOrder = orderRepository.findOrdersByUserId(user.getId());
+            if(optOrder.isEmpty()){
+                throw new IllegalArgumentException("Order does not exits in repository");
+            }
+            Order order = optOrder.get();
+            if(order.getStatus().equals("PAID")){
+                throw new RuntimeException("Your order already paid!");
+            }
+            double totalAmount = order.getTotalPrice();
             if (user.getBalance() < totalAmount) {
                 throw new RuntimeException("Insufficient balance! ");
             }
 
             user.setBalance(user.getBalance() - totalAmount);
             userRepository.save(user);
+            order.setStatus("PAID");
+            order.setDeliveryAddress(deliveryAddress);
             updateProductStock(order);
     }
 

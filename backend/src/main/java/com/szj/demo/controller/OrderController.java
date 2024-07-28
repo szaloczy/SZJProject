@@ -27,10 +27,10 @@ public class OrderController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping(value = "/create")
-    public ResponseEntity<ApiResponse<OrderDTO>> createOrder(@RequestBody Address address) {
+    public ResponseEntity<ApiResponse<Order>> createOrder(@RequestParam Long userId) {
         try {
-            OrderDTO orderDTO = orderService.createOrder(userService.currentUser(), address);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, orderDTO, ""));
+            Order order = orderService.createOrder(userService.currentUser());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, order, ""));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Your token is expired"));
         } catch (Exception e) {
@@ -40,9 +40,9 @@ public class OrderController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping("/pay")
-    public ResponseEntity<ApiResponse<String>> processPayment(@RequestParam("orderId") Long orderId) {
+    public ResponseEntity<ApiResponse<String>> processPayment(@RequestParam("userId") Long userId, @RequestBody Address deliveryAddress) {
         try {
-            orderService.processPayment(userService.currentUser(), orderId);
+            orderService.processPayment(userService.currentUser(), deliveryAddress);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Payment processed successfully", ""));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));

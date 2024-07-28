@@ -28,6 +28,6 @@ public class Order {
     private LocalDate orderDate;
     private String status;
     private double totalPrice;
+    @OneToOne(cascade = CascadeType.ALL)
     private Address deliveryAddress;
-
 }
