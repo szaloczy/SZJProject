@@ -16,6 +16,6 @@ public class UpdateBalanceRequest {
     private String holderName;
     private String expirationDate;
     private String cvv;
-    private BigDecimal newBalance;
+    private Double newBalance;
 
 }

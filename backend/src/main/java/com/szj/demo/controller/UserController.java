@@ -89,9 +89,9 @@ public class UserController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping(value = "balance")
-    public ResponseEntity<ApiResponse<BigDecimal>> getBalance(@RequestParam("id") Long userId){
+    public ResponseEntity<ApiResponse<Double>> getBalance(@RequestParam("id") Long userId){
         try {
-            BigDecimal balance = userService.getBalance(userId);
+            double balance = userService.getBalance(userId);
             return ResponseEntity.ok(new ApiResponse<>(true, balance, ""));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, e.getMessage()));

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Embeddable
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

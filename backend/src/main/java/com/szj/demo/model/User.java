@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class User {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column
@@ -37,8 +37,9 @@ public class User {
     private AuthenticationLevel accessLevel;
 
     @Column
-    private BigDecimal balance = BigDecimal.ZERO;
+    private Double balance = 0.0;
 
+    @Embedded
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;

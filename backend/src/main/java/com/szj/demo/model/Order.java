@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,5 +28,6 @@ public class Order {
     private LocalDate orderDate;
     private String status;
     private double totalPrice;
+    private Address deliveryAddress;
 
 }

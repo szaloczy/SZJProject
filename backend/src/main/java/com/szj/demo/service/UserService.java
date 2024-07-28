@@ -45,11 +45,11 @@ public class UserService {
         }
         validateCardDetails(updateBalanceRequest);
         User updatedUser = optUser.get();
-        updatedUser.setBalance(user.getBalance().add(updateBalanceRequest.getNewBalance()));
+        updatedUser.setBalance(user.getBalance() + updateBalanceRequest.getNewBalance());
         userRepository.save(updatedUser);
     }
 
-    public BigDecimal getBalance(Long userId) {
+    public Double getBalance(Long userId) {
         Optional<User> optUser = userRepository.findUserById(userId);
         if(optUser.isEmpty()){
             throw new IllegalArgumentException("User does not exists in repository");

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class Product {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private long productId;
 
     @JsonProperty

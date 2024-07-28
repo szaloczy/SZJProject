@@ -1,5 +1,6 @@
 package com.szj.demo.dtos.order;
 
+import com.szj.demo.model.Address;
 import com.szj.demo.model.Order;
 import com.szj.demo.model.OrderItem;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,7 @@ public class OrderDTO {
     private LocalDate orderDate;
     private String orderStatus;
     private double totalPrice;
+    private Address deliveryAddress;
 
     public OrderDTO(Order order) {
         this.orderId = order.getOrderId();
@@ -28,6 +30,6 @@ public class OrderDTO {
         this.orderDate = order.getOrderDate();
         this.orderStatus = order.getStatus();
         this.totalPrice = order.getTotalPrice();
-
+        this.deliveryAddress = order.getDeliveryAddress();
     }
 }
