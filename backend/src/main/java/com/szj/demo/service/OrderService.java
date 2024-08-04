@@ -34,13 +34,17 @@ public class OrderService {
           throw new RuntimeException("Your cart is empty!");
       }
 
+      Optional<Order> exitsOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
+      if(exitsOrder.isPresent()){
+          throw new RuntimeException("You already have a pending order!");
+      }
+
       Cart cart = optCart.get();
 
       Order order = new Order();
       order.setUser(cart.getUser());
       order.setOrderDate(LocalDate.now());
       order.setStatus("Pending");
-      //order.setDeliveryAddress(user.getAddress().getCountry().concat("-").concat(user.getAddress().getCity()));
 
       List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
           OrderItem orderItem = new OrderItem();
@@ -55,6 +59,7 @@ public class OrderService {
 
       cart.getCartItems().clear();
       cartRepository.save(cart);
+      cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
 
       return orderRepository.save(order);
     }
@@ -77,7 +82,10 @@ public class OrderService {
             user.setBalance(user.getBalance() - totalAmount);
             userRepository.save(user);
             order.setStatus("PAID");
-            order.setDeliveryAddress(deliveryAddress);
+
+            if(!user.getAddress().equals(deliveryAddress)){
+                order.setDeliveryAddress(deliveryAddress);
+            }
             updateProductStock(order);
     }
 

@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/orders")
 public class OrderController {
     private final UserService userService;
@@ -27,10 +28,12 @@ public class OrderController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping(value = "/create")
-    public ResponseEntity<ApiResponse<Order>> createOrder(@RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<String>> createOrder(@RequestParam Long userId) {
         try {
             Order order = orderService.createOrder(userService.currentUser());
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, order, ""));
+            return ResponseEntity.ok(new ApiResponse<>(true,"Your order created successfully",""));
+        } catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,null,e.getMessage()));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Your token is expired"));
         } catch (Exception e) {

@@ -88,6 +88,17 @@ public class UserController {
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @GetMapping(value = "get/address")
+    public ResponseEntity<ApiResponse<Address>> getAddress(@RequestParam Long userId) {
+        try {
+            Address address =  userService.getAddress(userId);
+            return ResponseEntity.ok(new ApiResponse<>(true,address,""));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping(value = "balance")
     public ResponseEntity<ApiResponse<Double>> getBalance(@RequestParam("id") Long userId){
         try {

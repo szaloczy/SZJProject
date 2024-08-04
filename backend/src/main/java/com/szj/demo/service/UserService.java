@@ -3,6 +3,7 @@ package com.szj.demo.service;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
+import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -133,6 +135,15 @@ public class UserService {
         activeTokens.put(foundUser.get(), token);
 
         return token;
+    }
+
+    public Address getAddress(Long userId) {
+        Optional<User> optUser = userRepository.findUserById(userId);
+        if (optUser.isEmpty()){
+            throw new IllegalArgumentException("User does not exists in repository");
+        }
+        User user = optUser.get();
+        return user.getAddress();
     }
     /**
      * Logs out the current user by removing their active token.

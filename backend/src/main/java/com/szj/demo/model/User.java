@@ -39,7 +39,6 @@ public class User {
     @Column
     private Double balance = 0.0;
 
-    @Embedded
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;
