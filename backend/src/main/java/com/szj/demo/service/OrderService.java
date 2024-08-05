@@ -22,81 +22,125 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final AddressRepository addressRepository;
 
-    @Transactional
-   public Order createOrder(User user) {
-      Optional<Cart> optCart = cartRepository.findCartByUserId(user.getId());
+   @Transactional
+    public Order createOrder(User user) {
+       Cart cart = getCartForUser(user);
+       checkPendingOrder(user);
 
-      if(optCart.isEmpty()){
-          throw new RuntimeException("Your cart is empty!");
-      }
+       Order order = buildOrderFromCart(cart);
+       clearCart(cart);
 
-      Optional<Order> exitsOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
-      if(exitsOrder.isPresent()){
-          throw new RuntimeException("You already have a pending order!");
-      }
+       return orderRepository.save(order);
+   }
 
-      Cart cart = optCart.get();
+    private Cart getCartForUser(User user) {
+       return cartRepository.findCartByUserId(user.getId()).orElseThrow(() -> new IllegalStateException("Your cart is empty"));
+    }
 
-      Order order = new Order();
-      order.setUser(cart.getUser());
-      order.setOrderDate(LocalDate.now());
-      order.setStatus("Pending");
+    private void checkPendingOrder(User user) {
+       Optional<Order> existingOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
+       if(existingOrder.isPresent()){
+           throw new IllegalStateException("You already have a pending order");
+       }
+    }
 
-      List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
-          OrderItem orderItem = new OrderItem();
-          orderItem.setProduct(cartItem.getCartProduct());
-          orderItem.setQuantity(cartItem.getCartItemQuantity());
-          orderItem.setOrder(order);
-          return orderItem;
-      }).toList();
+    private Order buildOrderFromCart(Cart cart) {
+       Order order = new Order();
+       order.setUser(cart.getUser());
+       order.setOrderDate(LocalDate.now());
+       order.setStatus("PENDING");
 
-      order.setOrderItems(orderItems);
-      order.setTotalPrice(cart.getCartItems().stream().mapToDouble(cartItem -> cartItem.getCartProduct().getPrice() * cartItem.getCartItemQuantity()).sum());
+       List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
+           OrderItem orderItem = new OrderItem();
+           orderItem.setProduct(cartItem.getCartProduct());
+           orderItem.setQuantity(cartItem.getCartItemQuantity());
+           orderItem.setOrder(order);
+           return orderItem;
+       }).toList();
 
-      cart.getCartItems().clear();
-      cartRepository.save(cart);
-      cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
+       order.setOrderItems(orderItems);
+       order.setTotalPrice(cart.getCartItems()
+                            .stream()
+                            .mapToDouble(cartItem -> cartItem.getCartProduct().getPrice() * cartItem.getCartItemQuantity()).sum());
 
-      return orderRepository.save(order);
+       return order;
+    }
+
+    private void clearCart(Cart cart) {
+       cart.getCartItems().clear();
+       cartRepository.save(cart);
+       cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
     }
 
     @Transactional
-    public void processPayment(User user, Address deliveryAddress){
-            Optional<Order> optOrder = orderRepository.findOrdersByUserId(user.getId());
-            if(optOrder.isEmpty()){
-                throw new IllegalArgumentException("Order does not exits in repository");
-            }
-            Order order = optOrder.get();
-            if(order.getStatus().equals("PAID")){
-                throw new RuntimeException("Your order already paid!");
-            }
-            double totalAmount = order.getTotalPrice();
-            if (user.getBalance() < totalAmount) {
-                throw new RuntimeException("Insufficient balance! ");
-            }
-
-            user.setBalance(user.getBalance() - totalAmount);
-            userRepository.save(user);
-            order.setStatus("PAID");
-
-            if(!user.getAddress().equals(deliveryAddress)){
-                order.setDeliveryAddress(deliveryAddress);
-            }
-            updateProductStock(order);
+    public void processPayment(User user, Address address) {
+       Order order = getOrderForUser(user);
+       validateOrderForPayment(order, user);
+       performPayment(user, order);
+       updateAddressIfNeeded(order, user, address);
+       updateProductStock(order);
     }
 
-    private void updateProductStock(Order order){
-        for(OrderItem orderItem : order.getOrderItems()){
+    private Order getOrderForUser(User user) {
+       return orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING")
+               .orElseThrow(() -> new IllegalStateException("Order does not exits"));
+    }
+
+    private void validateOrderForPayment(Order order, User user) {
+       if(order.getStatus().equals("PAID")){
+           throw new IllegalStateException("Your order is already paid");
+       }
+
+       double totalAmount = order.getTotalPrice();
+       if(user.getBalance() < totalAmount){
+           throw new IllegalStateException("Insufficient balance");
+       }
+    }
+
+    private void updateProductStock(Order order) {
+        for(OrderItem orderItem : order.getOrderItems()) {
             Product product = orderItem.getProduct();
             product.setStock(product.getStock() - orderItem.getQuantity());
-            if(product.getStock() < 0){
-                throw new RuntimeException("Product stock must be at least 1");
+            if(product.getStock() < 0) {
+                throw new IllegalStateException("Product stock must be at least 1");
             }
             productRepository.save(product);
         }
     }
+
+    private void updateAddressIfNeeded(Order order, User user, Address address) {
+     if(user.getAddress() == null || !user.getAddress().equals(address)){
+         Address existingAddress = addressRepository.findByDetails(
+               address.getCountry(),
+               address.getCity(),
+               address.getStreet(),
+               address.getZipCode()
+         );
+
+         if(existingAddress != null) {
+             user.setAddress(existingAddress);
+             order.setDeliveryAddress(existingAddress);
+         } else {
+             Address savedAddress = addressRepository.save(address);
+             user.setAddress(savedAddress);
+             order.setDeliveryAddress(savedAddress);
+         }
+         userRepository.save(user);
+     } else {
+         order.setDeliveryAddress(user.getAddress());
+     }
+    }
+
+    private void performPayment(User user, Order order) {
+        double totalAmount = order.getTotalPrice();
+        user.setBalance(user.getBalance() - totalAmount);
+        userRepository.save(user);
+        order.setStatus("PAID");
+        orderRepository.save(order);
+    }
+
 }
