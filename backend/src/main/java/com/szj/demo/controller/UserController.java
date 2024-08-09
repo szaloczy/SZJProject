@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -61,10 +61,10 @@ public class UserController {
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @PostMapping(value = "update/address")
-    public ResponseEntity<ApiResponse<Address>> updateAddress(@RequestBody Address address) {
+    @PostMapping(value = "address")
+    public ResponseEntity<ApiResponse<Address>> createAddress(@RequestBody Address address) {
         try{
-            userService.updateUserAddress(userService.currentUser(),address);
+            userService.createAddress(userService.currentUser(),address);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, address, ""));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
@@ -88,11 +88,11 @@ public class UserController {
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @GetMapping(value = "get/address")
-    public ResponseEntity<ApiResponse<Address>> getAddress(@RequestParam Long userId) {
+    @GetMapping(value = "address")
+    public ResponseEntity<ApiResponse<List<Address>>> getAddress(@RequestParam Long userId) {
         try {
-            Address address =  userService.getAddress(userId);
-            return ResponseEntity.ok(new ApiResponse<>(true,address,""));
+            List<Address> address =  userService.getAddress(userId);
+            return ResponseEntity.ok(new ApiResponse<>(true, address, ""));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }

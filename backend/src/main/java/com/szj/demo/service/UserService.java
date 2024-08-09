@@ -6,6 +6,7 @@ import com.szj.demo.model.Address;
 import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
+import com.szj.demo.repository.AddressRepository;
 import com.szj.demo.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -38,6 +39,7 @@ public class UserService {
     private final HttpServletRequest request;
     private final Map<User, String> activeTokens = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
+    private final AddressRepository addressRepository;
 
     @Transactional
     public void updateUserBalance(User user, UpdateBalanceRequest updateBalanceRequest) {
@@ -59,15 +61,47 @@ public class UserService {
         return optUser.get().getBalance();
     }
 
-    public void updateUserAddress(User user, Address newAddress){
+    public void createAddress(User user, Address newAddress){
         Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
-        if(optUser.isEmpty()){
-            throw new IllegalArgumentException("User does not exists in repository");
+        if (optUser.isEmpty()) {
+            throw new IllegalArgumentException("User does not exist in repository");
         }
 
         User updatedUser = optUser.get();
-        updatedUser.setAddress(newAddress);
+
+        // Check if the new address already exists
+        Optional<Address> existingAddress = addressRepository.findByDetails(
+                newAddress.getCountry(),
+                newAddress.getCity(),
+                newAddress.getStreet(),
+                newAddress.getZipCode()
+        );
+
+        Address addressToUse;
+        if (existingAddress.isPresent()) {
+            // If address exists, use it
+            addressToUse = existingAddress.get();
+        } else {
+            // If address doesn't exist, save the new address
+            addressToUse = addressRepository.save(newAddress);
+        }
+
+        // Add or update the address in the user's address list
+        // Check if the address already exists in the user's list
+        if (!updatedUser.getAddresses().contains(addressToUse)) {
+            updatedUser.getAddresses().add(addressToUse);
+        } else {
+            // Optionally update existing address details if needed
+            // You can modify this section to update specific fields if necessary
+        }
+
+        // Save the updated user
         userRepository.save(updatedUser);
+
+        // Optionally, ensure the address's user reference is set correctly
+        // This is typically handled automatically by JPA/Hibernate
+        addressToUse.setUser(updatedUser);
+        addressRepository.save(addressToUse);
     }
 
     private void validateCardDetails(UpdateBalanceRequest updateBalanceRequest) {
@@ -137,13 +171,13 @@ public class UserService {
         return token;
     }
 
-    public Address getAddress(Long userId) {
-        Optional<User> optUser = userRepository.findUserById(userId);
-        if (optUser.isEmpty()){
-            throw new IllegalArgumentException("User does not exists in repository");
+    public List<Address> getAddress(Long userId) {
+        List<Address> addresses = addressRepository.findAddressesByUserId(userId);
+        if (addresses.isEmpty()) {
+            throw new NoSuchElementException("No addresses found for user ID: " + userId);
         }
-        User user = optUser.get();
-        return user.getAddress();
+
+        return addresses;
     }
     /**
      * Logs out the current user by removing their active token.

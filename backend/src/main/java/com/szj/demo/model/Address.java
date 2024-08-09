@@ -14,12 +14,12 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String country;
-    @Column(nullable = false)
-    private String city;
-    @Column(nullable = false)
-    private String street;
-    @Column(nullable = false)
-    private String zipCode;
+   @ManyToOne
+   @JoinColumn(name = "user_id")
+   private User user;
+
+   private String country;
+   private String city;
+   private String street;
+   private String zipCode;
 }

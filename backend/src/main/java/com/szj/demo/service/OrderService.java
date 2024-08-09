@@ -116,17 +116,20 @@ public class OrderService {
                address.getStreet(),
                address.getZipCode());
 
-       if(existingAddress.isPresent()){
-           Address savedAddress = existingAddress.get();
-           user.setAddress(savedAddress);
-           order.setDeliveryAddress(savedAddress);
+       Address addressToUse;
+
+       if(existingAddress.isPresent()) {
+           addressToUse = existingAddress.get();
        } else {
-           Address savedAddress = addressRepository.save(address);
-           user.setAddress(savedAddress);
-           order.setDeliveryAddress(savedAddress);
+           addressToUse = addressRepository.save(address);
        }
 
-       userRepository.save(user);
+       if(!user.getAddresses().contains(addressToUse)) {
+           user.getAddresses().add(addressToUse);
+           userRepository.save(user);
+       }
+
+       order.setDeliveryAddress(addressToUse);
     }
 
     private void performPayment(User user, Order order) {
