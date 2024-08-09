@@ -1,19 +1,16 @@
 package com.szj.demo.service;
 
-import com.szj.demo.dtos.order.OrderDTO;
 import com.szj.demo.model.*;
 import com.szj.demo.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -113,26 +110,23 @@ public class OrderService {
     }
 
     private void updateAddressIfNeeded(Order order, User user, Address address) {
-     if(user.getAddress() == null || !user.getAddress().equals(address)){
-         Address existingAddress = addressRepository.findByDetails(
-               address.getCountry(),
+
+       Optional<Address> existingAddress = addressRepository.findByDetails(address.getCountry(),
                address.getCity(),
                address.getStreet(),
-               address.getZipCode()
-         );
+               address.getZipCode());
 
-         if(existingAddress != null) {
-             user.setAddress(existingAddress);
-             order.setDeliveryAddress(existingAddress);
-         } else {
-             Address savedAddress = addressRepository.save(address);
-             user.setAddress(savedAddress);
-             order.setDeliveryAddress(savedAddress);
-         }
-         userRepository.save(user);
-     } else {
-         order.setDeliveryAddress(user.getAddress());
-     }
+       if(existingAddress.isPresent()){
+           Address savedAddress = existingAddress.get();
+           user.setAddress(savedAddress);
+           order.setDeliveryAddress(savedAddress);
+       } else {
+           Address savedAddress = addressRepository.save(address);
+           user.setAddress(savedAddress);
+           order.setDeliveryAddress(savedAddress);
+       }
+
+       userRepository.save(user);
     }
 
     private void performPayment(User user, Order order) {
