@@ -43,7 +43,7 @@ public class OrderController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping("/pay")
-    public ResponseEntity<ApiResponse<String>> processPayment(@RequestParam("userId") Long userId, @RequestBody Address deliveryAddress) {
+    public ResponseEntity<ApiResponse<String>> processPayment(@RequestBody Address deliveryAddress) {
         try {
             orderService.processPayment(userService.currentUser(), deliveryAddress);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Payment processed successfully", ""));
