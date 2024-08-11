@@ -171,13 +171,13 @@ public class UserService {
         return token;
     }
 
-    public Address getAddress(Long userId) {
-        Optional<Address> optAddress = addressRepository.findUserAddressByUserId(userId);
+    public List<Address> getAddresses(User user) {
+        List<Address> optAddress = addressRepository.findAddressesByUserId(user.getId());
         if (optAddress.isEmpty()) {
-            throw new NoSuchElementException("No addresses found for user ID: " + userId);
+            throw new NoSuchElementException("No addresses found for user ID: " + user.getId());
         }
-        Address address = optAddress.get();
-        return address;
+        List<Address> addresses = optAddress;
+        return addresses;
     }
     /**
      * Logs out the current user by removing their active token.
