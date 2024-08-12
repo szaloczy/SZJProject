@@ -172,13 +172,19 @@ public class UserService {
     }
 
     public List<Address> getAddress(Long userId) {
-        List<Address> addresses = addressRepository.findAddressesByUserId(userId);
-        if (addresses.isEmpty()) {
-            throw new NoSuchElementException("No addresses found for user ID: " + userId);
+        Optional<User> user = userRepository.findUserById(userId);
+        if(user.isEmpty()){
+            throw new NoSuchElementException("User not found for ID: " + userId);
         }
 
+        if(user.get().getAddresses() == null || user.get().getAddresses().isEmpty()){
+            return new ArrayList<>();
+        }
+
+        List<Address> addresses = addressRepository.findAddressesByUserId(userId);
         return addresses;
     }
+
     /**
      * Logs out the current user by removing their active token.
      *
