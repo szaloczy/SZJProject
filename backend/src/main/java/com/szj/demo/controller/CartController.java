@@ -25,7 +25,6 @@ public class CartController {
     private final ProductService productService;
     private final UserService userService;
 
-
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping
     public ResponseEntity<ApiResponse<CartDTO>> getCart(Long userId) {

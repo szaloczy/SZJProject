@@ -52,5 +52,15 @@ public class OrderController {
         }
     }
 
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<String>> deleteOrder(@RequestParam Long orderId) {
+        try {
+            orderService.deleteOrder(userService.currentUser(), orderId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Order deleted successfully", ""));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 
 }

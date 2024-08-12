@@ -130,8 +130,8 @@ public class OrderService {
         } else {
             addressToUse = addressRepository.save(address);
         }
-        if (!updatedUser.getAddresses().contains(addressToUse)) {
-            updatedUser.getAddresses().add(addressToUse);
+        if (!updatedUser.getAddress().equals(addressToUse)) {
+            updatedUser.setAddress(addressToUse);
         }
 
        order.setDeliveryAddress(addressToUse);
@@ -148,6 +148,16 @@ public class OrderService {
         userRepository.save(user);
         order.setStatus("PAID");
         orderRepository.save(order);
+    }
+
+    @Transactional
+    public void deleteOrder(User user, Long orderId){
+        Optional<Order> optOrder = orderRepository.findOrderByOrderId(orderId);
+        if(optOrder.isEmpty()){
+            throw new NoSuchElementException("Order does not exits");
+        }
+        Order order = optOrder.get();
+        orderRepository.deleteByOrderId(orderId);
     }
 
 }

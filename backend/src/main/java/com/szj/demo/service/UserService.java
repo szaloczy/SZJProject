@@ -82,8 +82,8 @@ public class UserService {
         } else {
             addressToUse = addressRepository.save(newAddress);
         }
-        if (!updatedUser.getAddresses().contains(addressToUse)) {
-            updatedUser.getAddresses().add(addressToUse);
+        if (!updatedUser.getAddress().equals(addressToUse)) {
+            updatedUser.setAddress(addressToUse);
         }
 
         userRepository.save(updatedUser);
@@ -159,18 +159,17 @@ public class UserService {
         return token;
     }
 
-    public List<Address> getAddresses(User user) {
+    public Address getUserAddress(User user) {
         Optional<User> optUser = userRepository.findUserById(user.getId());
         if(optUser.isEmpty()){
             throw new NoSuchElementException("User not found for ID: " + user.getId());
         }
 
-        if(optUser.get().getAddresses() == null || optUser.get().getAddresses().isEmpty()){
-            return new ArrayList<>();
+        Optional<Address> address = addressRepository.findUserAddressByUserId(user.getId());
+        if(address.isEmpty()) {
+            return null;
         }
-
-        List<Address> addresses = addressRepository.findAddressesByUserId(user.getId());
-        return addresses;
+        return address.get();
     }
     /**
      * Logs out the current user by removing their active token.

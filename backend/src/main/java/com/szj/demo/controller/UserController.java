@@ -89,10 +89,10 @@ public class UserController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping(value = "address")
-    public ResponseEntity<ApiResponse<List<Address>>> getAddresses() {
+    public ResponseEntity<ApiResponse<Address>> getUserAddress() {
         try {
-            List<Address> addresses =  userService.getAddresses(userService.currentUser());
-            return ResponseEntity.ok(new ApiResponse<>(true, addresses, ""));
+            Address address =  userService.getUserAddress(userService.currentUser());
+            return ResponseEntity.ok(new ApiResponse<>(true, address, ""));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
