@@ -111,6 +111,13 @@ public class OrderService {
 
     private void updateAddressIfNeeded(Order order, User user, Address address) {
 
+        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
+        if (optUser.isEmpty()) {
+            throw new IllegalArgumentException("User does not exist in repository");
+        }
+
+        User updatedUser = optUser.get();
+
        Optional<Address> existingAddress = addressRepository.findByDetails(address.getCountry(),
                address.getCity(),
                address.getStreet(),
@@ -118,18 +125,21 @@ public class OrderService {
 
        Address addressToUse;
 
-       if(existingAddress.isPresent()) {
-           addressToUse = existingAddress.get();
-       } else {
-           addressToUse = addressRepository.save(address);
-       }
-
-       if(!user.getAddresses().contains(addressToUse)) {
-           user.getAddresses().add(addressToUse);
-           userRepository.save(user);
-       }
+        if (existingAddress.isPresent()) {
+            addressToUse = existingAddress.get();
+        } else {
+            addressToUse = addressRepository.save(address);
+        }
+        if (!updatedUser.getAddresses().contains(addressToUse)) {
+            updatedUser.getAddresses().add(addressToUse);
+        }
 
        order.setDeliveryAddress(addressToUse);
+        userRepository.save(updatedUser);
+
+        addressToUse.setUser(updatedUser);
+        addressRepository.save(addressToUse);
+
     }
 
     private void performPayment(User user, Order order) {

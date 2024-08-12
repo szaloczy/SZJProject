@@ -69,7 +69,6 @@ public class UserService {
 
         User updatedUser = optUser.get();
 
-        // Check if the new address already exists
         Optional<Address> existingAddress = addressRepository.findByDetails(
                 newAddress.getCountry(),
                 newAddress.getCity(),
@@ -79,27 +78,16 @@ public class UserService {
 
         Address addressToUse;
         if (existingAddress.isPresent()) {
-            // If address exists, use it
             addressToUse = existingAddress.get();
         } else {
-            // If address doesn't exist, save the new address
             addressToUse = addressRepository.save(newAddress);
         }
-
-        // Add or update the address in the user's address list
-        // Check if the address already exists in the user's list
         if (!updatedUser.getAddresses().contains(addressToUse)) {
             updatedUser.getAddresses().add(addressToUse);
-        } else {
-            // Optionally update existing address details if needed
-            // You can modify this section to update specific fields if necessary
         }
 
-        // Save the updated user
         userRepository.save(updatedUser);
 
-        // Optionally, ensure the address's user reference is set correctly
-        // This is typically handled automatically by JPA/Hibernate
         addressToUse.setUser(updatedUser);
         addressRepository.save(addressToUse);
     }
@@ -171,20 +159,19 @@ public class UserService {
         return token;
     }
 
-    public List<Address> getAddress(Long userId) {
-        Optional<User> user = userRepository.findUserById(userId);
-        if(user.isEmpty()){
-            throw new NoSuchElementException("User not found for ID: " + userId);
+    public List<Address> getAddresses(User user) {
+        Optional<User> optUser = userRepository.findUserById(user.getId());
+        if(optUser.isEmpty()){
+            throw new NoSuchElementException("User not found for ID: " + user.getId());
         }
 
-        if(user.get().getAddresses() == null || user.get().getAddresses().isEmpty()){
+        if(optUser.get().getAddresses() == null || optUser.get().getAddresses().isEmpty()){
             return new ArrayList<>();
         }
 
-        List<Address> addresses = addressRepository.findAddressesByUserId(userId);
+        List<Address> addresses = addressRepository.findAddressesByUserId(user.getId());
         return addresses;
     }
-
     /**
      * Logs out the current user by removing their active token.
      *
