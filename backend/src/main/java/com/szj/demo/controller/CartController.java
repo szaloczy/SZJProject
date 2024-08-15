@@ -4,6 +4,7 @@ import com.szj.demo.annotations.RequiredAuthenticationLevel;
 import com.szj.demo.dtos.cart.CartDTO;
 import com.szj.demo.dtos.cart.CartItemDTO;
 import com.szj.demo.enums.AuthenticationLevel;
+import com.szj.demo.exception.InvalidProductException;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.*;
 import com.szj.demo.service.CartService;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -26,14 +28,14 @@ public class CartController {
     private final UserService userService;
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @GetMapping
-    public ResponseEntity<ApiResponse<CartDTO>> getCart(Long userId) {
+    @GetMapping()
+    public ResponseEntity<ApiResponse<CartDTO>> getCart() {
         try {
-            Cart cart = cartService.getCartByUserId(userId);
+            Cart cart = cartService.getCartByUserId(userService.currentUser());
             CartDTO cartDTO = new CartDTO(cart);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartDTO, ""));
         }catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Something went wrong"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 
@@ -41,21 +43,22 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<CartItemDTO>> addItemToCart(@RequestBody CartItemDTO cartItemDTO) {
         try {
-            Optional<Product> optProduct = productService.findProductByProductId(cartItemDTO.getProductId());
-            if (optProduct.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null, "Product does not exits in repository!"));
-            }
-            Product product = optProduct.get();
-            CartItemDTO cart = cartService.addItemToCart(userService.currentUser(), product, cartItemDTO.getQuantity());
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cart, ""));
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, "Something went wrong!"));
+            CartItemDTO cartItems = cartService.addItemToCart(userService.currentUser(),cartItemDTO.getProductId(), cartItemDTO.getQuantity());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartItems, ""));
+        }catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (InvalidProductException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null, e.getMessage()));
+        }catch (InvalidTokenException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping("/remove")
-    public ResponseEntity<ApiResponse<CartDTO>> removeItemFromCart(@RequestBody CartItemDTO cartItemDTO){
+    public ResponseEntity<ApiResponse<String>> removeItemFromCart(@RequestBody CartItemDTO cartItemDTO){
         try {
             Optional<Product> optProduct = productService.findProductByProductId(cartItemDTO.getProductId());
             if (optProduct.isEmpty()) {
@@ -63,10 +66,9 @@ public class CartController {
             }
 
             Product product = optProduct.get();
-            Cart cart = cartService.removeItemFromCart(userService.currentUser(), product, cartItemDTO.getQuantity());
+            cartService.removeItemFromCart(userService.currentUser(), product, cartItemDTO.getQuantity());
 
-            CartDTO cartDTO = new CartDTO(cart);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, cartDTO, ""));
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Product has been removed successfully", ""));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }

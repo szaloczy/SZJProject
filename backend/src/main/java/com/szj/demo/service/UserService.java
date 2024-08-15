@@ -3,7 +3,6 @@ package com.szj.demo.service;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
-import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.AddressRepository;
@@ -17,11 +16,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
@@ -53,43 +50,21 @@ public class UserService {
         userRepository.save(updatedUser);
     }
 
-    public Double getBalance(Long userId) {
-        Optional<User> optUser = userRepository.findUserById(userId);
+    public Double getBalance(User user) {
+        Optional<User> optUser = userRepository.findUserById(user.getId());
         if(optUser.isEmpty()){
             throw new IllegalArgumentException("User does not exists in repository");
         }
         return optUser.get().getBalance();
     }
 
-    public void createAddress(User user, Address newAddress){
-        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
-        if (optUser.isEmpty()) {
-            throw new IllegalArgumentException("User does not exist in repository");
+    public void saveAddress(User user, Address address) {
+        Optional<User> userOptional = userRepository.findById(user.getId());
+        if (userOptional.isPresent()) {
+            User savedUser = userOptional.get();
+            savedUser.setAddress(address);
+            userRepository.save(savedUser);
         }
-
-        User updatedUser = optUser.get();
-
-        Optional<Address> existingAddress = addressRepository.findByDetails(
-                newAddress.getCountry(),
-                newAddress.getCity(),
-                newAddress.getStreet(),
-                newAddress.getZipCode()
-        );
-
-        Address addressToUse;
-        if (existingAddress.isPresent()) {
-            addressToUse = existingAddress.get();
-        } else {
-            addressToUse = addressRepository.save(newAddress);
-        }
-        if (!updatedUser.getAddress().equals(addressToUse)) {
-            updatedUser.setAddress(addressToUse);
-        }
-
-        userRepository.save(updatedUser);
-
-        addressToUse.setUser(updatedUser);
-        addressRepository.save(addressToUse);
     }
 
     private void validateCardDetails(UpdateBalanceRequest updateBalanceRequest) {
@@ -159,17 +134,15 @@ public class UserService {
         return token;
     }
 
-    public Address getUserAddress(User user) {
-        Optional<User> optUser = userRepository.findUserById(user.getId());
-        if(optUser.isEmpty()){
-            throw new NoSuchElementException("User not found for ID: " + user.getId());
+    public Address getAddressByUserId(User user) {
+        Optional<User> userOptional = userRepository.findById(user.getId());
+        if (userOptional.isPresent()) {
+            User savedUser = userOptional.get();
+            Address address = savedUser.getAddress();
+            return (address != null) ? address : new Address();
+        } else {
+           throw new NoSuchElementException("some thing went wrong!");
         }
-
-        Optional<Address> address = addressRepository.findUserAddressByUserId(user.getId());
-        if(address.isEmpty()) {
-            return null;
-        }
-        return address.get();
     }
     /**
      * Logs out the current user by removing their active token.

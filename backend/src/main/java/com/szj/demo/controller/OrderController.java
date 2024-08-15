@@ -27,10 +27,10 @@ public class OrderController {
     private final OrderService orderService;
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @PostMapping(value = "/create")
-    public ResponseEntity<ApiResponse<String>> createOrder(@RequestParam Long userId) {
+    @PostMapping()
+    public ResponseEntity<ApiResponse<String>> createOrder() {
         try {
-            Order order = orderService.createOrder(userService.currentUser());
+            orderService.createOrder(userService.currentUser());
             return ResponseEntity.ok(new ApiResponse<>(true,"Your order created successfully",""));
         } catch (RuntimeException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,null,e.getMessage()));
@@ -47,13 +47,17 @@ public class OrderController {
         try {
             orderService.processPayment(userService.currentUser(), deliveryAddress);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Payment processed successfully", ""));
+        } catch (IllegalArgumentException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (InvalidTokenException e){
+          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @DeleteMapping
+    @DeleteMapping()
     public ResponseEntity<ApiResponse<String>> deleteOrder(@RequestParam Long orderId) {
         try {
             orderService.deleteOrder(userService.currentUser(), orderId);

@@ -40,8 +40,6 @@ public class Product {
     @JsonProperty
     private String productCondition;
 
-    @JsonProperty
-    private Boolean available;
 
     public Product() {}
 
@@ -53,7 +51,6 @@ public class Product {
         this.creationDate = LocalDateTime.now();
         this.productCondition = condition;
         this.stock = stock;
-        this.available = stock > 0;
     }
 
     public void update(ProductUpdateDTO modification) {

@@ -62,13 +62,24 @@ public class UserController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping(value = "address")
-    public ResponseEntity<ApiResponse<Address>> createAddress(@RequestBody Address address) {
+    public ResponseEntity<ApiResponse<String>> createAddress(@RequestBody Address address) {
         try{
-            userService.createAddress(userService.currentUser(),address);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, address, ""));
+            userService.saveAddress(userService.currentUser(),address);
+            return ResponseEntity.ok().body(new ApiResponse<>(true, "you address has been saved.", ""));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @GetMapping(value = "address")
+    public ResponseEntity<ApiResponse<Address>> getUserAddress() {
+        try {
+            Address address =  userService.getAddressByUserId(userService.currentUser());
+            return ResponseEntity.ok(new ApiResponse<>(true, address, ""));
+        } catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
@@ -88,21 +99,10 @@ public class UserController {
     }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
-    @GetMapping(value = "address")
-    public ResponseEntity<ApiResponse<Address>> getUserAddress() {
-        try {
-            Address address =  userService.getUserAddress(userService.currentUser());
-            return ResponseEntity.ok(new ApiResponse<>(true, address, ""));
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
-        }
-    }
-
-    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @GetMapping(value = "balance")
-    public ResponseEntity<ApiResponse<Double>> getBalance(@RequestParam("id") Long userId){
+    public ResponseEntity<ApiResponse<Double>> getBalance(){
         try {
-            double balance = userService.getBalance(userId);
+            double balance = userService.getBalance(userService.currentUser());
             return ResponseEntity.ok(new ApiResponse<>(true, balance, ""));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, e.getMessage()));

@@ -1,10 +1,11 @@
 package com.szj.demo.service;
 
+import com.szj.demo.exception.InvalidCartException;
+import com.szj.demo.exception.InvalidOrderException;
 import com.szj.demo.model.*;
 import com.szj.demo.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,79 +24,114 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
 
-   @Transactional
-    public Order createOrder(User user) {
-       Cart cart = getCartForUser(user);
-       checkPendingOrder(user);
+    @Transactional
+    public void createOrder(User user) {
+        try {
+            Cart cart = getCartForUser(user);
+            checkPendingOrder(user);
+            validateCart(cart);
 
-       Order order = buildOrderFromCart(cart);
-       clearCart(cart);
+            Order order = buildOrderFromCart(cart);
 
-       return orderRepository.save(order);
-   }
-
-    private Cart getCartForUser(User user) {
-       return cartRepository.findCartByUserId(user.getId()).orElseThrow(() -> new IllegalStateException("Your cart is empty"));
+            orderRepository.save(order);
+        } catch (NoSuchElementException e) {
+            throw new NoSuchElementException(e.getMessage());
+        } catch (InvalidCartException | InvalidOrderException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void checkPendingOrder(User user) {
-       Optional<Order> existingOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
-       if(existingOrder.isPresent()){
-           throw new IllegalStateException("You already have a pending order");
-       }
+    private void validateCart(Cart cart) throws InvalidCartException {
+        if(isCartEmpty(cart)){
+            throw new InvalidCartException("Your cart is empty");
+        }
+    }
+
+    private boolean isCartEmpty(Cart cart) {
+        return cart.getCartItems().isEmpty();
+    }
+
+    private Cart getCartForUser(User user) {
+        return cartRepository.findCartByUserId(user.getId()).orElseThrow(() -> new NoSuchElementException("Your cart does not exists!"));
+    }
+
+    private void checkPendingOrder(User user) throws InvalidOrderException {
+        Optional<Order> existingOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
+        if(existingOrder.isPresent()){
+            throw new InvalidOrderException("You already have a PENDING order! Buy or cancelled it");
+        }
     }
 
     private Order buildOrderFromCart(Cart cart) {
-       Order order = new Order();
-       order.setUser(cart.getUser());
-       order.setOrderDate(LocalDate.now());
-       order.setStatus("PENDING");
+        Order order = new Order();
+        order.setUser(cart.getUser());
+        order.setOrderDate(LocalDate.now());
+        order.setStatus("PENDING");
 
-       List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
-           OrderItem orderItem = new OrderItem();
-           orderItem.setProduct(cartItem.getCartProduct());
-           orderItem.setQuantity(cartItem.getCartItemQuantity());
-           orderItem.setOrder(order);
-           return orderItem;
-       }).toList();
+        List<OrderItem> orderItems = cart.getCartItems().stream().map(cartItem -> {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setProduct(cartItem.getCartProduct());
+            orderItem.setQuantity(cartItem.getCartItemQuantity());
+            orderItem.setOrder(order);
+            return orderItem;
+        }).toList();
 
-       order.setOrderItems(orderItems);
-       order.setTotalPrice(cart.getCartItems()
-                            .stream()
-                            .mapToDouble(cartItem -> cartItem.getCartProduct().getPrice() * cartItem.getCartItemQuantity()).sum());
+        order.setOrderItems(orderItems);
+        order.setTotalPrice(cart.getCartItems()
+                .stream()
+                .mapToDouble(cartItem -> cartItem.getCartProduct().getPrice() * cartItem.getCartItemQuantity()).sum());
 
-       return order;
+        return order;
     }
 
     private void clearCart(Cart cart) {
-       cart.getCartItems().clear();
-       cartRepository.save(cart);
-       cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
+        cart.getCartItems().clear();
+        cartRepository.save(cart);
+        cartItemRepository.deleteCartItemsByCart_CartId(cart.getCartId());
     }
 
     @Transactional
-    public void processPayment(User user, Address address) {
-       Order order = getOrderForUser(user);
-       validateOrderForPayment(order, user);
-       performPayment(user, order);
-       updateAddressIfNeeded(order, user, address);
-       updateProductStock(order);
+    public void processPayment(User user, Address address) throws InvalidOrderException {
+        try {
+            Order order = getOrderForUser(user);
+            validateOrderForPayment(order, user);
+            Address savedAddress = checkAddress(address);
+            order.setAddress(savedAddress);
+            performPayment(user, order);
+            Cart cart = getCartForUser(user);
+            clearCart(cart);
+            updateProductStock(order);
+        } catch (IllegalStateException | InvalidOrderException e) {
+            throw new InvalidOrderException(e.getMessage());
+        }
+
     }
 
-    private Order getOrderForUser(User user) {
-       return orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING")
-               .orElseThrow(() -> new IllegalStateException("Order does not exits"));
+    private Address checkAddress(Address address) {
+        Optional<Address> existingAddress = addressRepository.findByDetails(address.getCountry(), address.getStreet(), address.getCity(), address.getZipCode());
+
+        if(existingAddress.isPresent()) {
+            return existingAddress.get();
+        } else {
+             Address newAddress = new Address(address.getCountry(), address.getCity(),address.getStreet(),address.getZipCode());
+             return addressRepository.save(newAddress);
+        }
+    }
+
+    private Order getOrderForUser(User user) throws InvalidOrderException {
+        return orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING")
+                .orElseThrow(() -> new InvalidOrderException("Order not found"));
     }
 
     private void validateOrderForPayment(Order order, User user) {
-       if(order.getStatus().equals("PAID")){
-           throw new IllegalStateException("Your order is already paid");
-       }
+        if(!order.getStatus().equals("PENDING")){
+            throw new IllegalStateException("Invalid order status");
+        }
 
-       double totalAmount = order.getTotalPrice();
-       if(user.getBalance() < totalAmount){
-           throw new IllegalStateException("Insufficient balance");
-       }
+        double totalAmount = order.getTotalPrice();
+        if(user.getBalance() < totalAmount){
+            throw new IllegalStateException("Insufficient balance");
+        }
     }
 
     private void updateProductStock(Order order) {
@@ -107,39 +143,6 @@ public class OrderService {
             }
             productRepository.save(product);
         }
-    }
-
-    private void updateAddressIfNeeded(Order order, User user, Address address) {
-
-        Optional<User> optUser = userRepository.findUserByUsername(user.getUsername());
-        if (optUser.isEmpty()) {
-            throw new IllegalArgumentException("User does not exist in repository");
-        }
-
-        User updatedUser = optUser.get();
-
-       Optional<Address> existingAddress = addressRepository.findByDetails(address.getCountry(),
-               address.getCity(),
-               address.getStreet(),
-               address.getZipCode());
-
-       Address addressToUse;
-
-        if (existingAddress.isPresent()) {
-            addressToUse = existingAddress.get();
-        } else {
-            addressToUse = addressRepository.save(address);
-        }
-        if (!updatedUser.getAddress().equals(addressToUse)) {
-            updatedUser.setAddress(addressToUse);
-        }
-
-       order.setDeliveryAddress(addressToUse);
-        userRepository.save(updatedUser);
-
-        addressToUse.setUser(updatedUser);
-        addressRepository.save(addressToUse);
-
     }
 
     private void performPayment(User user, Order order) {
