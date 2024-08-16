@@ -36,14 +36,20 @@ public class UserService {
     private final Map<User, String> activeTokens = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
 
-    public User saveUserEmail(User user, String email){
-        user.setEmail(email);
-        return userRepository.save(user);
+    public User saveUserEmail(User user, String email) {
+        if (isEmailValid(email)) {
+            user.setEmail(email);
+            return userRepository.save(user);
+        }
+        throw new IllegalArgumentException("Invalid email");
     }
     
     public User updateUserEmail(User user, String newEmail) {
+        if (isEmailValid(newEmail)) {
         user.setEmail(newEmail);
         return userRepository.save(user);
+        }
+        throw new IllegalArgumentException("Invalid email");
     }
 
     public User getUserEmail(User user) {
@@ -52,6 +58,10 @@ public class UserService {
             return optUser.get();
         }
         throw new IllegalArgumentException("User has no email");
+    }
+
+    private boolean isEmailValid(String email) {
+        return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
     @Transactional

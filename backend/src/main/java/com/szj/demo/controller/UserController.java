@@ -35,6 +35,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "You saved your email successfully: " + user.getEmail(),""));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (IllegalArgumentException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false, null, e.getMessage()));
         }

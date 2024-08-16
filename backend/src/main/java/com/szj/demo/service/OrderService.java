@@ -1,6 +1,5 @@
 package com.szj.demo.service;
 
-import com.szj.demo.dtos.order.OrderDTO;
 import com.szj.demo.exception.InvalidCartException;
 import com.szj.demo.exception.InvalidOrderException;
 import com.szj.demo.model.*;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -58,7 +56,7 @@ public class OrderService {
     }
 
     private void checkPendingOrder(User user) throws InvalidOrderException {
-        Optional<Order> existingOrder = orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING");
+        Optional<Order> existingOrder = orderRepository.findOrderByUserIdAndStatus(user.getId(), "PENDING");
         if(existingOrder.isPresent()){
             throw new InvalidOrderException("You already have a PENDING order! Buy or cancelled it");
         }
@@ -121,7 +119,7 @@ public class OrderService {
     }
 
     private Order getOrderForUser(User user) throws InvalidOrderException {
-        return orderRepository.findOrdersByUserIdAndStatus(user.getId(), "PENDING")
+        return orderRepository.findOrderByUserIdAndStatus(user.getId(), "PENDING")
                 .orElseThrow(() -> new InvalidOrderException("Order not found"));
     }
 
@@ -156,13 +154,13 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrder(Long orderId){
-        Optional<Order> optOrder = orderRepository.findOrderByOrderId(orderId);
+    public void deleteOrder(User user){
+        Optional<Order> optOrder = orderRepository.findOrderByUserIdAndStatus(user.getId(), "PENDING");
         if(optOrder.isEmpty()){
             throw new NoSuchElementException("Order does not exits");
         }
 
-        orderRepository.deleteByOrderId(orderId);
+        orderRepository.deleteByOrderId(optOrder.get().getOrderId());
     }
 
 }

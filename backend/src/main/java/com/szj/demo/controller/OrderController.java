@@ -56,9 +56,9 @@ public class OrderController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @DeleteMapping()
-    public ResponseEntity<ApiResponse<String>> deleteOrder(@RequestParam Long orderId) {
+    public ResponseEntity<ApiResponse<String>> deleteOrder() {
         try {
-            orderService.deleteOrder(orderId);
+            orderService.deleteOrder(userService.currentUser());
             return ResponseEntity.ok(new ApiResponse<>(true, "Order deleted successfully", ""));
         } catch (NoSuchElementException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null, "Order not found"));
