@@ -5,7 +5,6 @@ import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
-import com.szj.demo.repository.AddressRepository;
 import com.szj.demo.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -36,7 +35,24 @@ public class UserService {
     private final HttpServletRequest request;
     private final Map<User, String> activeTokens = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
-    private final AddressRepository addressRepository;
+
+    public User saveUserEmail(User user, String email){
+        user.setEmail(email);
+        return userRepository.save(user);
+    }
+    
+    public User updateUserEmail(User user, String newEmail) {
+        user.setEmail(newEmail);
+        return userRepository.save(user);
+    }
+
+    public User getUserEmail(User user) {
+        Optional<User> optUser = userRepository.findUserById(user.getId());
+        if (optUser.isPresent()) {
+            return optUser.get();
+        }
+        throw new IllegalArgumentException("User has no email");
+    }
 
     @Transactional
     public void updateUserBalance(User user, UpdateBalanceRequest updateBalanceRequest) {

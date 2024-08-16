@@ -7,7 +7,7 @@ import com.szj.demo.exception.InvalidTokenException;
 import com.szj.demo.model.Address;
 import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.Order;
-import com.szj.demo.model.User;
+import com.szj.demo.repository.OrderRepository;
 import com.szj.demo.service.OrderService;
 import com.szj.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -47,10 +47,8 @@ public class OrderController {
         try {
             orderService.processPayment(userService.currentUser(), deliveryAddress);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Payment processed successfully", ""));
-        } catch (IllegalArgumentException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (InvalidTokenException e){
-          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token"));
+          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
@@ -60,8 +58,10 @@ public class OrderController {
     @DeleteMapping()
     public ResponseEntity<ApiResponse<String>> deleteOrder(@RequestParam Long orderId) {
         try {
-            orderService.deleteOrder(userService.currentUser(), orderId);
+            orderService.deleteOrder(orderId);
             return ResponseEntity.ok(new ApiResponse<>(true, "Order deleted successfully", ""));
+        } catch (NoSuchElementException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, null, "Order not found"));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }

@@ -8,7 +8,9 @@ import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.service.UserService;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.batch.BatchTransactionManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,48 @@ import java.util.NoSuchElementException;
 public class UserController {
 
     private final UserService userService;
+
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PostMapping("/email")
+    public ResponseEntity<ApiResponse<String>> createUser(@RequestBody String email) {
+        try{
+            User user = userService.saveUserEmail(userService.currentUser(), email);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "You saved your email successfully: " + user.getEmail(),""));
+        } catch (InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PutMapping("/email")
+    ResponseEntity<ApiResponse<String>> updateUserEmail(@RequestBody String email){
+        try {
+         User user = userService.updateUserEmail(userService.currentUser(),email);
+         return ResponseEntity.ok().body(new ApiResponse<>(true, "Your email updated successfully: " + user.getEmail(), ""));
+        } catch (IllegalArgumentException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (InvalidTokenException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token"));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
+
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @GetMapping("/email")
+    ResponseEntity<ApiResponse<String>> getUserEmail(){
+        try{
+        User user = userService.getUserEmail(userService.currentUser());
+        return ResponseEntity.ok().body(new ApiResponse<>(true, "Your email found: " + user.getEmail(), ""));
+        } catch(InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token"));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PUBLIC)
     @PostMapping(value = "auth/register")
@@ -104,8 +148,10 @@ public class UserController {
         try {
             double balance = userService.getBalance(userService.currentUser());
             return ResponseEntity.ok(new ApiResponse<>(true, balance, ""));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, e.getMessage()));
+        } catch (InvalidTokenException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.getMessage()));
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
 }

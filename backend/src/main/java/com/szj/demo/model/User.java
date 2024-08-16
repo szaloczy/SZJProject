@@ -3,6 +3,8 @@ package com.szj.demo.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.szj.demo.enums.AuthenticationLevel;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,11 +40,16 @@ public class User {
     private AuthenticationLevel accessLevel;
 
     @Column
+    @JsonProperty("balance")
     private Double balance = 0.0;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
+    @JsonProperty("address")
     private Address address;
+
+    @Column
+    private String email;
 
     public User() {
     }

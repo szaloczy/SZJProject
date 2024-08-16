@@ -1,5 +1,6 @@
 package com.szj.demo.service;
 
+import com.szj.demo.dtos.order.OrderDTO;
 import com.szj.demo.exception.InvalidCartException;
 import com.szj.demo.exception.InvalidOrderException;
 import com.szj.demo.model.*;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -154,12 +156,12 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrder(User user, Long orderId){
+    public void deleteOrder(Long orderId){
         Optional<Order> optOrder = orderRepository.findOrderByOrderId(orderId);
         if(optOrder.isEmpty()){
             throw new NoSuchElementException("Order does not exits");
         }
-        Order order = optOrder.get();
+
         orderRepository.deleteByOrderId(orderId);
     }
 

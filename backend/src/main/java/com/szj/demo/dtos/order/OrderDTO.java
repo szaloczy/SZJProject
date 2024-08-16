@@ -15,8 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class OrderDTO {
-    private Long orderId;
-    private Long userId;
     private List<OrderItem> orderItems = new ArrayList<>();
     private LocalDate orderDate;
     private String orderStatus;
@@ -24,8 +22,6 @@ public class OrderDTO {
     private Address address;
 
     public OrderDTO(Order order) {
-        this.orderId = order.getOrderId();
-        this.userId = order.getUser().getId();
         this.orderItems = order.getOrderItems();
         this.orderDate = order.getOrderDate();
         this.orderStatus = order.getStatus();
