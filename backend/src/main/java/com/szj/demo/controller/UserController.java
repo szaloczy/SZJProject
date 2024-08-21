@@ -1,5 +1,7 @@
 package com.szj.demo.controller;
 
+import com.szj.common.fileServer.model.FileEntity;
+import com.szj.common.fileServer.services.FileServerService;
 import com.szj.demo.annotations.RequiredAuthenticationLevel;
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
@@ -8,14 +10,12 @@ import com.szj.demo.model.ApiResponse;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.service.UserService;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.batch.BatchTransactionManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -25,7 +25,20 @@ import java.util.NoSuchElementException;
 public class UserController {
 
     private final UserService userService;
+    private final FileServerService fileServerService;
 
+    @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
+    @PostMapping(value="file-server")
+    public ResponseEntity<ApiResponse<FileEntity>> uploadProfilePicture(@RequestParam("file") MultipartFile file) {
+        try {
+            FileEntity fileEntity = fileServerService.upload(file);
+            userService.changeProfilePicture(userService.currentUser(), fileEntity.getId());
+            fileServerService.setFileEntityInUse(fileEntity.getId(), true);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, fileEntity, ""));
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, e.toString()));
+        }
+    }
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping("/email")

@@ -148,10 +148,8 @@ public class UserService {
         Optional<User> foundUser = userRepository.findUserByUsername(user.getUsername());
         if(foundUser.isEmpty()) throw new NoSuchElementException("Username does not exist!");
 
-        //Proper password decoding and matching...
         if(!passwordEncoder.matches(user.getPassword(), foundUser.get().getPassword())) throw new IllegalAccessException("Incorrect username or password!");
 
-        // Remove old token if by some miracle it wasn't cleaned up.
         activeTokens.remove(foundUser.get());
 
         String token = generateToken(foundUser.get());
@@ -275,5 +273,10 @@ public class UserService {
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public void changeProfilePicture(User user, UUID profilePictureId) {
+        user.setProfilePicture(profilePictureId);
+        userRepository.save(user);
     }
 }

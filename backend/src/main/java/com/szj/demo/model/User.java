@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Document
@@ -51,6 +52,9 @@ public class User {
     @Column
     private String email;
 
+    @JsonProperty("profilePicture")
+    private UUID profilePicture;
+
     public User() {
     }
 
@@ -77,5 +81,8 @@ public class User {
         if (obj == null || getClass() != obj.getClass()) return false;
         User user = (User) obj;
         return username.equals(user.username);
+    }
+
+    public void setProfilePicture(UUID profilePictureId) {
     }
 }
