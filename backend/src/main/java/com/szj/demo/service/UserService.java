@@ -2,7 +2,6 @@ package com.szj.demo.service;
 
 import com.szj.demo.enums.AuthenticationLevel;
 import com.szj.demo.exception.InvalidTokenException;
-import com.szj.demo.model.Address;
 import com.szj.demo.model.UpdateBalanceRequest;
 import com.szj.demo.model.User;
 import com.szj.demo.repository.UserRepository;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * The UserService class is responsible for managing user-related operations such as registration, login, and access control.
@@ -29,6 +29,7 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     @Value("${SECRET_KEY}")
     private String SECRET_KEY;
     private final UserRepository userRepository;
@@ -36,33 +37,6 @@ public class UserService {
     private final Map<User, String> activeTokens = new HashMap<>();
     private final PasswordEncoder passwordEncoder;
 
-    public User saveUserEmail(User user, String email) {
-        if (isEmailValid(email)) {
-            user.setEmail(email);
-            return userRepository.save(user);
-        }
-        throw new IllegalArgumentException("Invalid email");
-    }
-    
-    public User updateUserEmail(User user, String newEmail) {
-        if (isEmailValid(newEmail)) {
-        user.setEmail(newEmail);
-        return userRepository.save(user);
-        }
-        throw new IllegalArgumentException("Invalid email");
-    }
-
-    public User getUserEmail(User user) {
-        Optional<User> optUser = userRepository.findUserById(user.getId());
-        if (optUser.isPresent()) {
-            return optUser.get();
-        }
-        throw new IllegalArgumentException("User has no email");
-    }
-
-    private boolean isEmailValid(String email) {
-        return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    }
 
     @Transactional
     public void updateUserBalance(User user, UpdateBalanceRequest updateBalanceRequest) {
@@ -76,21 +50,18 @@ public class UserService {
         userRepository.save(updatedUser);
     }
 
-    public Double getBalance(User user) {
-        Optional<User> optUser = userRepository.findUserById(user.getId());
-        if(optUser.isEmpty()){
-            throw new IllegalArgumentException("User does not exists in repository");
+    public void updateUserDetails(User currentUser, User user) {
+        if (!user.getEmail().equals(currentUser.getEmail()) && !userRepository.findUserByEmail(user.getEmail()).isPresent() && !user.getEmail().equals("")){
+            if (!Pattern.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", user.getEmail())) {
+                throw new IllegalStateException("Invalid email");
+            }
+            currentUser.setEmail(user.getEmail());
         }
-        return optUser.get().getBalance();
-    }
+            if(!user.getAddress().equals(currentUser.getAddress())) {
+                currentUser.setAddress(user.getAddress());
+            }
 
-    public void saveAddress(User user, Address address) {
-        Optional<User> userOptional = userRepository.findById(user.getId());
-        if (userOptional.isPresent()) {
-            User savedUser = userOptional.get();
-            savedUser.setAddress(address);
-            userRepository.save(savedUser);
-        }
+        userRepository.save(currentUser);
     }
 
     private void validateCardDetails(UpdateBalanceRequest updateBalanceRequest) {
@@ -158,16 +129,6 @@ public class UserService {
         return token;
     }
 
-    public Address getAddressByUserId(User user) {
-        Optional<User> userOptional = userRepository.findById(user.getId());
-        if (userOptional.isPresent()) {
-            User savedUser = userOptional.get();
-            Address address = savedUser.getAddress();
-            return (address != null) ? address : new Address();
-        } else {
-           throw new NoSuchElementException("some thing went wrong!");
-        }
-    }
     /**
      * Logs out the current user by removing their active token.
      *
