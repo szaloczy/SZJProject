@@ -98,7 +98,6 @@ public class FileProcessorService {
         return imageInByte;
     }
 
-
     private String getFileExtension(String filename) {
         if(filename.lastIndexOf(".") != -1 && filename.lastIndexOf(".") != 0) {
             return filename.substring(filename.lastIndexOf(".") + 1);
