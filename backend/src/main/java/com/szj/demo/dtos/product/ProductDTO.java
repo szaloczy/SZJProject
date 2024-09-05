@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -42,6 +43,9 @@ public class ProductDTO {
     @JsonProperty
     private Boolean available;
 
+    @JsonProperty
+    private UUID imageId;
+
     public ProductDTO(Product product){
         this.productId = product.getProductId();
         this.productName = product.getProductName();
@@ -52,5 +56,6 @@ public class ProductDTO {
         this.creationDate = product.getCreationDate();
         this.condition = product.getProductCondition();
         this.available = product.getStock() > 0;
+        this.imageId = product.getImageId();
     }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -40,10 +41,13 @@ public class Product {
     @JsonProperty
     private String productCondition;
 
+    @JsonProperty
+    private UUID imageId;
+
 
     public Product() {}
 
-    public Product(String sellerName, String productName, String description, String condition, Double price, Integer stock) {
+    public Product(String sellerName, String productName, String description, String condition, Double price, Integer stock, UUID imageId) {
         this.seller = sellerName;
         this.productName = productName;
         this.description = description;
@@ -51,6 +55,7 @@ public class Product {
         this.creationDate = LocalDateTime.now();
         this.productCondition = condition;
         this.stock = stock;
+        this.imageId = imageId;
     }
 
     public void update(ProductUpdateDTO modification) {

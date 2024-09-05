@@ -82,7 +82,4 @@ public class User {
         User user = (User) obj;
         return username.equals(user.username);
     }
-
-    public void setProfilePicture(UUID profilePictureId) {
-    }
 }

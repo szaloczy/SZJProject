@@ -21,7 +21,6 @@ public class FileProcessorService {
 
     private final Path root = Paths.get("").toAbsolutePath().resolve("FileServerStorage");
 
-
     private final FileWrapperService fileWrapperService;
 
     //Dimensions for the resized image

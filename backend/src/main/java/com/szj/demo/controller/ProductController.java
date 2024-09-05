@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -38,10 +39,10 @@ public class ProductController {
 
     @RequiredAuthenticationLevel(level = AuthenticationLevel.PRIVATE)
     @PostMapping()
-    public ResponseEntity<ApiResponse<ProductDTO>> createProduct(@RequestBody ProductRequest myProduct){
+    public ResponseEntity<ApiResponse<ProductDTO>> createProduct(@RequestParam(value = "file") MultipartFile file, ProductRequest myProduct){
 
         try{
-            ProductDTO productDTO = productService.createProduct(userService.currentUser(), myProduct);
+            ProductDTO productDTO = productService.createProduct(userService.currentUser(), myProduct, file);
             return ResponseEntity.ok().body(new ApiResponse<>(true, productDTO,""));
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, null, "Invalid token!"));
